@@ -94,4 +94,54 @@ public enum HTTPWaiter {
             return nil
         }
     }
+    
+    /// Waits for a request matching the given criteria to be fired, regardless of response status
+    public static func waitForRequest(
+        url: String? = nil,
+        urlPattern: String? = nil,
+        method: String? = nil,
+        headers: [String: String]? = nil,
+        queryParameters: [String: String]? = nil,
+        timeout: TimeInterval = 10.0,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async -> HTTPRequests.HTTPRequest? {
+        let matcher = HTTPRequestMatcher(
+            url: url,
+            urlPattern: urlPattern,
+            method: method,
+            headers: headers,
+            queryParameters: queryParameters
+        )
+        
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ -> Bool in
+                // Use HTTPRequests static methods directly
+                let semaphore = DispatchSemaphore(value: 0)
+                var foundRequest: HTTPRequests.HTTPRequest? = nil
+                Task.detached {
+                    let requests = await HTTPRequests.allRequests()
+                    foundRequest = requests.first { matcher.matches($0) }
+                    semaphore.signal()
+                }
+                semaphore.wait()
+                return foundRequest != nil
+            },
+            object: nil
+        )
+        
+        let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
+        
+        if result == .completed {
+            let requests = await HTTPRequests.allRequests()
+            return requests.first { matcher.matches($0) }
+        } else {
+            XCTFail(
+                "Request matching criteria was not fired within timeout: \(matcher.description)",
+                file: file,
+                line: line
+            )
+            return nil
+        }
+    }
 }
