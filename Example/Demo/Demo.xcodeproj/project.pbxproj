@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E828DF4F2E0F960600F5D85D /* HTTPAssertion in Frameworks */ = {isa = PBXBuildFile; productRef = E828DF4E2E0F960600F5D85D /* HTTPAssertion */; };
+		E828DF512E0F960F00F5D85D /* HTTPAssertion in Frameworks */ = {isa = PBXBuildFile; productRef = E828DF502E0F960F00F5D85D /* HTTPAssertion */; };
+		E828DF532E0F960F00F5D85D /* HTTPAssertionTesting in Frameworks */ = {isa = PBXBuildFile; productRef = E828DF522E0F960F00F5D85D /* HTTPAssertionTesting */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E87416332E0F94B700D26247 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -39,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E828DF4F2E0F960600F5D85D /* HTTPAssertion in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,17 +53,27 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E828DF532E0F960F00F5D85D /* HTTPAssertionTesting in Frameworks */,
+				E828DF512E0F960F00F5D85D /* HTTPAssertion in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		E828DF4D2E0F960600F5D85D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		E87416122E0F94B600D26247 = {
 			isa = PBXGroup;
 			children = (
 				E874161D2E0F94B600D26247 /* Demo */,
 				E87416352E0F94B700D26247 /* DemoUITests */,
+				E828DF4D2E0F960600F5D85D /* Frameworks */,
 				E874161C2E0F94B600D26247 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +107,7 @@
 			);
 			name = Demo;
 			packageProductDependencies = (
+				E828DF4E2E0F960600F5D85D /* HTTPAssertion */,
 			);
 			productName = Demo;
 			productReference = E874161B2E0F94B600D26247 /* Demo.app */;
@@ -113,6 +131,8 @@
 			);
 			name = DemoUITests;
 			packageProductDependencies = (
+				E828DF502E0F960F00F5D85D /* HTTPAssertion */,
+				E828DF522E0F960F00F5D85D /* HTTPAssertionTesting */,
 			);
 			productName = DemoUITests;
 			productReference = E87416322E0F94B700D26247 /* DemoUITests.xctest */;
@@ -146,6 +166,9 @@
 			);
 			mainGroup = E87416122E0F94B600D26247;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E874161C2E0F94B600D26247 /* Products */;
 			projectDirPath = "";
@@ -446,6 +469,31 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../HTTPAssertion;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E828DF4E2E0F960600F5D85D /* HTTPAssertion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;
+			productName = HTTPAssertion;
+		};
+		E828DF502E0F960F00F5D85D /* HTTPAssertion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;
+			productName = HTTPAssertion;
+		};
+		E828DF522E0F960F00F5D85D /* HTTPAssertionTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;
+			productName = HTTPAssertionTesting;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E87416132E0F94B600D26247 /* Project object */;
 }
