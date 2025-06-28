@@ -23,8 +23,20 @@ public func HTTPAssertRequested(
     
     let expectation = XCTNSPredicateExpectation(
         predicate: NSPredicate { _, _ in
-            let requests = HTTPRequestStorage.shared.loadRequestsFromDisk()
-            return requests.contains { matcher.matches($0) }
+            // Synchronous predicate check - cannot use async/await here
+            // This is a limitation with current XCTest framework
+            // We need to check the disk directly
+            let storage = HTTPRequestStorage.shared
+            // Use Task.detached to avoid actor isolation issues
+            let semaphore = DispatchSemaphore(value: 0)
+            var result = false
+            Task.detached {
+                let requests = await storage.loadRequestsFromDisk()
+                result = requests.contains { matcher.matches($0) }
+                semaphore.signal()
+            }
+            semaphore.wait()
+            return result
         },
         object: nil
     )
@@ -50,7 +62,7 @@ public func HTTPAssertNotRequested(
     timeout: TimeInterval = 2.0,
     file: StaticString = #filePath,
     line: UInt = #line
-) {
+) async {
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,
@@ -68,10 +80,10 @@ public func HTTPAssertNotRequested(
         object: nil
     )
     
-    let _ = XCTWaiter.wait(for: [expectation], timeout: timeout)
+    let _ = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
     
     // After waiting, check that no matching request exists
-    let requests = HTTPRequestStorage.shared.loadRequestsFromDisk()
+    let requests = await HTTPRequestStorage.shared.loadRequestsFromDisk()
     let found = requests.contains { matcher.matches($0) }
     
     XCTAssertFalse(

@@ -22,7 +22,9 @@ public final class HTTPAssertion {
         swizzle()
         
         // Initialize storage
-        HTTPRequestStorage.shared.initialize()
+        Task {
+            await HTTPRequestStorage.shared.initialize()
+        }
     }
     
     /// Stops HTTP request interception
@@ -41,7 +43,9 @@ public final class HTTPAssertion {
     
     /// Clears all recorded HTTP requests
     public static func clearRecordedRequests() {
-        HTTPRequestStorage.shared.clear()
+        Task {
+            await HTTPRequestStorage.shared.clear()
+        }
     }
     
     // MARK: - Method Swizzling

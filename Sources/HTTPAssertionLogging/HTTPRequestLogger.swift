@@ -4,13 +4,11 @@ import Foundation
 final class HTTPRequestLogger {
     nonisolated(unsafe) static let shared = HTTPRequestLogger()
     
-    private let queue = DispatchQueue(label: "com.httpassertion.logger", attributes: .concurrent)
-    
     private init() {}
     
     /// Logs an HTTP request
     func logRequest(_ request: URLRequest) {
-        queue.async(flags: .barrier) {
+        Task {
             let recordedRequest = RecordedHTTPRequest(
                 id: UUID(),
                 timestamp: Date(),
@@ -20,15 +18,15 @@ final class HTTPRequestLogger {
                 error: nil
             )
             
-            HTTPRequestStorage.shared.store(recordedRequest)
+            await HTTPRequestStorage.shared.store(recordedRequest)
         }
     }
     
     /// Logs an HTTP response
     func logResponse(for request: URLRequest, response: HTTPURLResponse, data: Data?, error: Error?) {
-        queue.async(flags: .barrier) {
+        Task {
             // Find the matching request and update it with response
-            HTTPRequestStorage.shared.updateResponse(
+            await HTTPRequestStorage.shared.updateResponse(
                 for: request,
                 response: response,
                 data: data,

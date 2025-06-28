@@ -1,10 +1,9 @@
 import Foundation
 
 /// Manages storage of HTTP requests to shared directory
-public final class HTTPRequestStorage: @unchecked Sendable {
+public actor HTTPRequestStorage {
     public static let shared = HTTPRequestStorage()
     
-    private let queue = DispatchQueue(label: "com.httpassertion.storage", attributes: .concurrent)
     private var requests: [UUID: RecordedHTTPRequest] = [:]
     private let fileManager = FileManager.default
     private let encoder = JSONEncoder()
@@ -48,57 +47,49 @@ public final class HTTPRequestStorage: @unchecked Sendable {
     
     /// Stores a recorded HTTP request
     func store(_ request: RecordedHTTPRequest) {
-        queue.async(flags: .barrier) {
-            self.requests[request.id] = request
-            self.saveRequestToDisk(request)
-        }
+        requests[request.id] = request
+        saveRequestToDisk(request)
     }
     
     /// Updates a request with response information
     func updateResponse(for urlRequest: URLRequest, response: HTTPURLResponse, data: Data?, error: Error?) {
-        queue.async(flags: .barrier) {
-            // Find the most recent matching request
-            let matchingRequest = self.requests.values
-                .filter { $0.request.url == urlRequest.url && $0.response == nil }
-                .sorted { $0.timestamp > $1.timestamp }
-                .first
-            
-            guard let request = matchingRequest else { return }
-            
-            // Update the request with response
-            var updatedRequest = request
-            updatedRequest.response = CodableHTTPURLResponse(response)
-            updatedRequest.responseData = data
-            updatedRequest.error = error.map(CodableError.init)
-            
-            self.requests[request.id] = updatedRequest
-            self.saveRequestToDisk(updatedRequest)
-        }
+        // Find the most recent matching request
+        let matchingRequest = requests.values
+            .filter { $0.request.url == urlRequest.url && $0.response == nil }
+            .sorted { $0.timestamp > $1.timestamp }
+            .first
+        
+        guard let request = matchingRequest else { return }
+        
+        // Update the request with response
+        var updatedRequest = request
+        updatedRequest.response = CodableHTTPURLResponse(response)
+        updatedRequest.responseData = data
+        updatedRequest.error = error.map(CodableError.init)
+        
+        requests[request.id] = updatedRequest
+        saveRequestToDisk(updatedRequest)
     }
     
     /// Clears all stored requests
     public func clear() {
-        queue.async(flags: .barrier) {
-            self.requests.removeAll()
-            
-            guard let directory = self.storageDirectory else { return }
-            
-            do {
-                let files = try self.fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-                for file in files where file.pathExtension == "json" {
-                    try self.fileManager.removeItem(at: file)
-                }
-            } catch {
-                print("HTTPAssertion: Failed to clear storage: \(error)")
+        requests.removeAll()
+        
+        guard let directory = storageDirectory else { return }
+        
+        do {
+            let files = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+            for file in files where file.pathExtension == "json" {
+                try fileManager.removeItem(at: file)
             }
+        } catch {
+            print("HTTPAssertion: Failed to clear storage: \(error)")
         }
     }
     
     /// Gets all stored requests
     public func allRequests() -> [RecordedHTTPRequest] {
-        queue.sync {
-            Array(requests.values).sorted { $0.timestamp < $1.timestamp }
-        }
+        Array(requests.values).sorted { $0.timestamp < $1.timestamp }
     }
     
     /// Loads all requests from disk (used for testing)
