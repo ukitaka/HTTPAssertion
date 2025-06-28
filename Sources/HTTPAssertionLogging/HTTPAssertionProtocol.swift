@@ -4,14 +4,35 @@ import Foundation
 @objc(HTTPAssertionProtocol)
 final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
     
+    static let httpAssertionInternalKey = "com.httpassertion.internal"
+    
     private var sessionTask: URLSessionTask?
-    private var responseData: Data?
+    private var response: URLResponse?
+    private var responseData: NSMutableData?
+    private lazy var session: URLSession = { [unowned self] in
+        return URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+    }()
     
     // MARK: - URLProtocol Methods
     
     override class func canInit(with request: URLRequest) -> Bool {
+        return canServeRequest(request)
+    }
+    
+    override class func canInit(with task: URLSessionTask) -> Bool {
+        if #available(iOS 13.0, macOS 10.15, *) {
+            if task is URLSessionWebSocketTask {
+                return false
+            }
+        }
+        
+        guard let request = task.currentRequest else { return false }
+        return canServeRequest(request)
+    }
+    
+    private class func canServeRequest(_ request: URLRequest) -> Bool {
         // Check if we've already handled this request to avoid infinite loop
-        if URLProtocol.property(forKey: "HTTPAssertionHandled", in: request) != nil {
+        guard URLProtocol.property(forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: request) == nil else {
             return false
         }
         
@@ -30,69 +51,75 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
     }
     
     override func startLoading() {
-        guard let mutableRequest = (request as NSURLRequest).mutableCopy() as? NSMutableURLRequest else {
-            return
-        }
-        
-        // Mark this request as handled to avoid infinite loop
-        URLProtocol.setProperty(true, forKey: "HTTPAssertionHandled", in: mutableRequest)
-        
-        let request = mutableRequest as URLRequest
-        
         // Log the request
         HTTPRequestLogger.shared.logRequest(request)
         
-        // Create a new session task
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
-        sessionTask = session.dataTask(with: request)
+        let mutableRequest = (request as NSURLRequest).mutableCopy() as! NSMutableURLRequest
+        URLProtocol.setProperty(true, forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: mutableRequest)
+        sessionTask = session.dataTask(with: mutableRequest as URLRequest)
         sessionTask?.resume()
     }
     
     override func stopLoading() {
-        sessionTask?.cancel()
-        sessionTask = nil
-        responseData = nil
+        session.getTasksWithCompletionHandler { dataTasks, _, _ in
+            dataTasks.forEach { $0.cancel() }
+            self.session.invalidateAndCancel()
+        }
     }
 }
 
 // MARK: - URLSessionDataDelegate
 extension HTTPAssertionProtocol: URLSessionDataDelegate {
     
-    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-        responseData = Data()
-        completionHandler(.allow)
-    }
-    
-    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         responseData?.append(data)
         client?.urlProtocol(self, didLoad: data)
     }
     
-    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        if let error = error {
-            client?.urlProtocol(self, didFailWithError: error)
-        } else {
-            client?.urlProtocolDidFinishLoading(self)
+    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        self.response = response
+        responseData = NSMutableData()
+        
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        completionHandler(.allow)
+    }
+    
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        defer {
+            if let error = error {
+                client?.urlProtocol(self, didFailWithError: error)
+            } else {
+                client?.urlProtocolDidFinishLoading(self)
+            }
         }
         
         // Log the response
-        if let httpResponse = task.response as? HTTPURLResponse {
+        if let response = response as? HTTPURLResponse {
+            let data = (responseData ?? NSMutableData()) as Data
             HTTPRequestLogger.shared.logResponse(
                 for: request,
-                response: httpResponse,
-                data: responseData,
+                response: response,
+                data: data,
                 error: error
             )
         }
     }
     
-    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
-        client?.urlProtocol(self, wasRedirectedTo: request, redirectResponse: response)
-        completionHandler(request)
+    public func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        let updatedRequest: URLRequest
+        if URLProtocol.property(forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: request) != nil {
+            let mutableRequest = (request as NSURLRequest).mutableCopy() as! NSMutableURLRequest
+            URLProtocol.removeProperty(forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: mutableRequest)
+            updatedRequest = mutableRequest as URLRequest
+        } else {
+            updatedRequest = request
+        }
+        
+        client?.urlProtocol(self, wasRedirectedTo: updatedRequest, redirectResponse: response)
+        completionHandler(updatedRequest)
     }
     
-    func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+    public func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         let protectionSpace = challenge.protectionSpace
         let sender = challenge.sender
         

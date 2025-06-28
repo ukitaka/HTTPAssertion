@@ -1,8 +1,8 @@
 import Foundation
 
 /// Manages storage of HTTP requests to shared directory
-final class HTTPRequestStorage: @unchecked Sendable {
-    static let shared = HTTPRequestStorage()
+public final class HTTPRequestStorage: @unchecked Sendable {
+    public static let shared = HTTPRequestStorage()
     
     private let queue = DispatchQueue(label: "com.httpassertion.storage", attributes: .concurrent)
     private var requests: [UUID: RecordedHTTPRequest] = [:]
@@ -77,7 +77,7 @@ final class HTTPRequestStorage: @unchecked Sendable {
     }
     
     /// Clears all stored requests
-    func clear() {
+    public func clear() {
         queue.async(flags: .barrier) {
             self.requests.removeAll()
             
@@ -95,10 +95,37 @@ final class HTTPRequestStorage: @unchecked Sendable {
     }
     
     /// Gets all stored requests
-    func getAllRequests() -> [RecordedHTTPRequest] {
+    public func getAllRequests() -> [RecordedHTTPRequest] {
         queue.sync {
             Array(requests.values).sorted { $0.timestamp < $1.timestamp }
         }
+    }
+    
+    /// Loads all requests from disk (used for testing)
+    public func loadAllRequestsFromDisk() -> [RecordedHTTPRequest] {
+        var loadedRequests: [RecordedHTTPRequest] = []
+        
+        guard let directory = storageDirectory else { return [] }
+        
+        do {
+            let files = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+            
+            for file in files where file.pathExtension == "json" {
+                do {
+                    let data = try Data(contentsOf: file)
+                    let request = try decoder.decode(RecordedHTTPRequest.self, from: data)
+                    loadedRequests.append(request)
+                } catch {
+                    // Skip corrupted files
+                    continue
+                }
+            }
+        } catch {
+            // Directory might not exist yet
+            return []
+        }
+        
+        return loadedRequests.sorted { $0.timestamp < $1.timestamp }
     }
     
     // MARK: - Private Methods

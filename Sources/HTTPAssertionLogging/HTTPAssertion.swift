@@ -13,6 +13,9 @@ public final class HTTPAssertion {
         guard !_isStarted else { return }
         _isStarted = true
         
+        // Register custom URLProtocol
+        URLProtocol.registerClass(HTTPAssertionProtocol.self)
+        
         // Perform method swizzling for URLSessionConfiguration
         URLSessionConfigurationSwizzler.swizzle()
         
@@ -27,6 +30,9 @@ public final class HTTPAssertion {
         
         guard _isStarted else { return }
         _isStarted = false
+        
+        // Unregister custom URLProtocol
+        URLProtocol.unregisterClass(HTTPAssertionProtocol.self)
         
         URLSessionConfigurationSwizzler.unswizzle()
     }

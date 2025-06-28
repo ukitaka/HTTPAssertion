@@ -5,10 +5,10 @@ import HTTPAssertionLogging
 /// Provides assertion APIs for XCUITest to verify HTTP requests
 public final class HTTPAssertionTester {
     
-    private let storage: HTTPRequestReader
+    private let storage = HTTPRequestStorage.shared
     
     public init() {
-        self.storage = HTTPRequestReader()
+        // Storage is already initialized by HTTPAssertionLogging
     }
     
     /// Asserts that a request matching the given criteria exists
@@ -34,7 +34,7 @@ public final class HTTPAssertionTester {
         var found = false
         
         while Date() < deadline && !found {
-            let requests = storage.loadAllRequests()
+            let requests = storage.loadAllRequestsFromDisk()
             found = requests.contains { matcher.matches($0) }
             
             if !found {
@@ -71,7 +71,7 @@ public final class HTTPAssertionTester {
         
         Thread.sleep(forTimeInterval: timeout)
         
-        let requests = storage.loadAllRequests()
+        let requests = storage.loadAllRequestsFromDisk()
         let found = requests.contains { matcher.matches($0) }
         
         XCTAssertFalse(
@@ -98,13 +98,13 @@ public final class HTTPAssertionTester {
             queryParameters: queryParameters
         )
         
-        let requests = storage.loadAllRequests()
+        let requests = storage.loadAllRequestsFromDisk()
         return requests.filter { matcher.matches($0) }
     }
     
     /// Clears all recorded requests (useful for test cleanup)
     public func clearAllRequests() {
-        storage.clearAll()
+        storage.clear()
     }
 }
 
@@ -168,71 +168,5 @@ private struct HTTPRequestMatcher {
         }
         
         return true
-    }
-}
-
-/// Reads HTTP requests from the shared storage directory
-private final class HTTPRequestReader {
-    private let fileManager = FileManager.default
-    private let decoder = JSONDecoder()
-    
-    private var storageDirectory: URL? {
-        #if targetEnvironment(simulator)
-        // Use SIMULATOR_SHARED_RESOURCES_DIRECTORY for simulator
-        if let sharedDir = ProcessInfo.processInfo.environment["SIMULATOR_SHARED_RESOURCES_DIRECTORY"] {
-            let url = URL(fileURLWithPath: sharedDir)
-                .appendingPathComponent("Library")
-                .appendingPathComponent("Caches")
-                .appendingPathComponent("HTTPAssertion")
-            return url
-        }
-        #endif
-        
-        // Fallback to app's caches directory
-        return fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("HTTPAssertion")
-    }
-    
-    init() {
-        decoder.dateDecodingStrategy = .iso8601
-    }
-    
-    func loadAllRequests() -> [RecordedHTTPRequest] {
-        guard let directory = storageDirectory else { return [] }
-        
-        var requests: [RecordedHTTPRequest] = []
-        
-        do {
-            let files = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-            
-            for file in files where file.pathExtension == "json" {
-                do {
-                    let data = try Data(contentsOf: file)
-                    let request = try decoder.decode(RecordedHTTPRequest.self, from: data)
-                    requests.append(request)
-                } catch {
-                    // Skip corrupted files
-                    continue
-                }
-            }
-        } catch {
-            // Directory might not exist yet
-            return []
-        }
-        
-        return requests.sorted { $0.timestamp < $1.timestamp }
-    }
-    
-    func clearAll() {
-        guard let directory = storageDirectory else { return }
-        
-        do {
-            let files = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-            for file in files where file.pathExtension == "json" {
-                try fileManager.removeItem(at: file)
-            }
-        } catch {
-            // Ignore errors during cleanup
-        }
     }
 }

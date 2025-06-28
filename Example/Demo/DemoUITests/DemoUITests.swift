@@ -51,13 +51,10 @@ final class DemoUITests: XCTestCase {
         
         Thread.sleep(forTimeInterval: 2.0)
         
-        let reqs = httpTester.getRequests()
-        print(reqs)
-        
         // Verify all requests were made using assertRequest
         httpTester.assertRequest(
-            url: "https://www.google.com/search?q=Swift%20programming",
-            method: "GET"
+            urlPattern: ".*google\\.com/search.*",
+            method: "GET", queryParameters: ["q": "Swift programming"]
         )
         
         httpTester.assertRequest(
@@ -78,12 +75,6 @@ final class DemoUITests: XCTestCase {
         // Verify we can get all requests at once
         let allRequests = httpTester.getRequests()
         XCTAssertGreaterThanOrEqual(allRequests.count, 4, "Should have at least 4 requests")
-        
-        // Also test with URL pattern
-        httpTester.assertRequest(
-            urlPattern: ".*google\\.com.*",
-            queryParameters: ["q": "Swift programming"]
-        )
     }
 }
 
