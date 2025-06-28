@@ -34,7 +34,7 @@ public final class HTTPAssertionTester {
         var found = false
         
         while Date() < deadline && !found {
-            let requests = storage.loadAllRequestsFromDisk()
+            let requests = storage.loadRequestsFromDisk()
             found = requests.contains { matcher.matches($0) }
             
             if !found {
@@ -71,7 +71,7 @@ public final class HTTPAssertionTester {
         
         Thread.sleep(forTimeInterval: timeout)
         
-        let requests = storage.loadAllRequestsFromDisk()
+        let requests = storage.loadRequestsFromDisk()
         let found = requests.contains { matcher.matches($0) }
         
         XCTAssertFalse(
@@ -83,7 +83,7 @@ public final class HTTPAssertionTester {
     }
     
     /// Gets all requests matching the given criteria
-    public func getRequests(
+    public func requests(
         url: String? = nil,
         urlPattern: String? = nil,
         method: String? = nil,
@@ -98,7 +98,7 @@ public final class HTTPAssertionTester {
             queryParameters: queryParameters
         )
         
-        let requests = storage.loadAllRequestsFromDisk()
+        let requests = storage.loadRequestsFromDisk()
         return requests.filter { matcher.matches($0) }
     }
     

@@ -95,14 +95,14 @@ public final class HTTPRequestStorage: @unchecked Sendable {
     }
     
     /// Gets all stored requests
-    public func getAllRequests() -> [RecordedHTTPRequest] {
+    public func allRequests() -> [RecordedHTTPRequest] {
         queue.sync {
             Array(requests.values).sorted { $0.timestamp < $1.timestamp }
         }
     }
     
     /// Loads all requests from disk (used for testing)
-    public func loadAllRequestsFromDisk() -> [RecordedHTTPRequest] {
+    public func loadRequestsFromDisk() -> [RecordedHTTPRequest] {
         var loadedRequests: [RecordedHTTPRequest] = []
         
         guard let directory = storageDirectory else { return [] }

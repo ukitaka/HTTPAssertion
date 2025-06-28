@@ -73,7 +73,7 @@ final class DemoUITests: XCTestCase {
         )
         
         // Verify we can get all requests at once
-        let allRequests = httpTester.getRequests()
+        let allRequests = httpTester.requests()
         XCTAssertGreaterThanOrEqual(allRequests.count, 4, "Should have at least 4 requests")
     }
 }

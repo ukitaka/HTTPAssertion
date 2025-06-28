@@ -3,15 +3,15 @@ import Foundation
 /// Main entry point for HTTPAssertion library
 public final class HTTPAssertion {
     private static let lock = NSLock()
-    private nonisolated(unsafe) static var _isStarted = false
+    private nonisolated(unsafe) static var isStarted = false
     
     /// Starts HTTP request interception and logging
     public static func start() {
         lock.lock()
         defer { lock.unlock() }
         
-        guard !_isStarted else { return }
-        _isStarted = true
+        guard !isStarted else { return }
+        isStarted = true
         
         // Register custom URLProtocol
         URLProtocol.registerClass(HTTPAssertionProtocol.self)
@@ -28,8 +28,8 @@ public final class HTTPAssertion {
         lock.lock()
         defer { lock.unlock() }
         
-        guard _isStarted else { return }
-        _isStarted = false
+        guard isStarted else { return }
+        isStarted = false
         
         // Unregister custom URLProtocol
         URLProtocol.unregisterClass(HTTPAssertionProtocol.self)

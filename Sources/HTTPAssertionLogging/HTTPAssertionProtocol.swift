@@ -6,7 +6,6 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
     
     static let httpAssertionInternalKey = "com.httpassertion.internal"
     
-    private var sessionTask: URLSessionTask?
     private var response: URLResponse?
     private var responseData: NSMutableData?
     private lazy var session: URLSession = { [unowned self] in
@@ -20,12 +19,6 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
     }
     
     override class func canInit(with task: URLSessionTask) -> Bool {
-        if #available(iOS 13.0, macOS 10.15, *) {
-            if task is URLSessionWebSocketTask {
-                return false
-            }
-        }
-        
         guard let request = task.currentRequest else { return false }
         return canServeRequest(request)
     }
@@ -56,13 +49,12 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
         
         let mutableRequest = (request as NSURLRequest).mutableCopy() as! NSMutableURLRequest
         URLProtocol.setProperty(true, forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: mutableRequest)
-        sessionTask = session.dataTask(with: mutableRequest as URLRequest)
-        sessionTask?.resume()
+        session.dataTask(with: mutableRequest as URLRequest).resume()
     }
     
     override func stopLoading() {
-        session.getTasksWithCompletionHandler { dataTasks, _, _ in
-            dataTasks.forEach { $0.cancel() }
+        session.getAllTasks { tasks in
+            tasks.forEach { $0.cancel() }
             self.session.invalidateAndCancel()
         }
     }

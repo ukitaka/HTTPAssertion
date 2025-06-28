@@ -4,14 +4,14 @@ import ObjectiveC
 /// Handles method swizzling for URLSessionConfiguration to intercept requests
 final class URLSessionConfigurationSwizzler {
     private static let lock = NSLock()
-    private nonisolated(unsafe) static var _isSwizzled = false
+    private nonisolated(unsafe) static var isSwizzled = false
     
     static func swizzle() {
         lock.lock()
         defer { lock.unlock() }
         
-        guard !_isSwizzled else { return }
-        _isSwizzled = true
+        guard !isSwizzled else { return }
+        isSwizzled = true
         
         swizzleDefaultConfiguration()
         swizzleEphemeralConfiguration()
@@ -21,8 +21,8 @@ final class URLSessionConfigurationSwizzler {
         lock.lock()
         defer { lock.unlock() }
         
-        guard _isSwizzled else { return }
-        _isSwizzled = false
+        guard isSwizzled else { return }
+        isSwizzled = false
         
         // Re-swizzle to restore original implementations
         swizzleDefaultConfiguration()
