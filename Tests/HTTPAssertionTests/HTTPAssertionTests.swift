@@ -1,5 +1,5 @@
 import XCTest
-@testable import HTTPAssertion
+@testable import HTTPAssertionLogging
 
 final class HTTPAssertionTests: XCTestCase {
     

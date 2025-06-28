@@ -11,8 +11,8 @@ let package = Package(
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "HTTPAssertion",
-            targets: ["HTTPAssertion"]),
+            name: "HTTPAssertionLogging",
+            targets: ["HTTPAssertionLogging"]),
         .library(
             name: "HTTPAssertionTesting",
             targets: ["HTTPAssertionTesting"]),
@@ -21,16 +21,16 @@ let package = Package(
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "HTTPAssertion"),
+            name: "HTTPAssertionLogging"),
         .target(
             name: "HTTPAssertionTesting",
-            dependencies: ["HTTPAssertion"],
+            dependencies: ["HTTPAssertionLogging"],
             linkerSettings: [
                 .linkedFramework("XCTest", .when(platforms: [.iOS]))
             ]),
         .testTarget(
             name: "HTTPAssertionTests",
-            dependencies: ["HTTPAssertion", "HTTPAssertionTesting"]
+            dependencies: ["HTTPAssertionLogging", "HTTPAssertionTesting"]
         ),
     ]
 )

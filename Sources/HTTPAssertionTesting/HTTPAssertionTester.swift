@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-import HTTPAssertion
+import HTTPAssertionLogging
 
 /// Provides assertion APIs for XCUITest to verify HTTP requests
 public final class HTTPAssertionTester {
