@@ -7,7 +7,6 @@ public actor FileStorage {
     private let decoder = JSONDecoder()
     private let subdirectory: String
     
-    
     private var storageDirectory: URL? {
         #if targetEnvironment(simulator)
         // Use SIMULATOR_SHARED_RESOURCES_DIRECTORY for simulator
@@ -27,7 +26,7 @@ public actor FileStorage {
             .appendingPathComponent(subdirectory)
     }
     
-    internal init(subdirectory: String) {
+    public init(subdirectory: String) {
         self.subdirectory = subdirectory
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601

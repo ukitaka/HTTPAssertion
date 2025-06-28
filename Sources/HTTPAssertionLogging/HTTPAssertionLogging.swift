@@ -23,8 +23,6 @@ public final class HTTPAssertionLogging {
         
         // Initialize storage
         Task {
-            await FileStorage.httpRequests.initialize()
-            await FileStorage.context.initialize()
             await HTTPRequestStorage.shared.initialize()
             await ContextStorage.shared.initialize()
         }

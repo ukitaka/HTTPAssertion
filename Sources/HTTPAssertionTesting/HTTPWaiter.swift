@@ -30,7 +30,7 @@ public enum HTTPWaiter {
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: RecordedHTTPRequest? = nil
                 Task.detached {
-                    let requests = await storage.loadRequestsFromDisk()
+                    let requests = await storage.allRequests()
                     foundRequest = requests.first { matcher.matches($0) && $0.response != nil }
                     semaphore.signal()
                 }
@@ -43,7 +43,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequestStorage.shared.loadRequestsFromDisk()
+            let requests = await HTTPRequestStorage.shared.allRequests()
             return requests.first { matcher.matches($0) && $0.response != nil }
         } else {
             XCTFail(
@@ -70,7 +70,7 @@ public enum HTTPWaiter {
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: RecordedHTTPRequest? = nil
                 Task.detached {
-                    let requests = await storage.loadRequestsFromDisk()
+                    let requests = await storage.allRequests()
                     foundRequest = requests.first { $0.id == requestID && $0.response != nil }
                     semaphore.signal()
                 }
@@ -83,7 +83,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequestStorage.shared.loadRequestsFromDisk()
+            let requests = await HTTPRequestStorage.shared.allRequests()
             return requests.first { $0.id == requestID && $0.response != nil }
         } else {
             XCTFail(

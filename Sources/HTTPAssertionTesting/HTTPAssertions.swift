@@ -31,7 +31,7 @@ public func HTTPAssertRequested(
             let semaphore = DispatchSemaphore(value: 0)
             var result = false
             Task.detached {
-                let requests = await storage.loadRequestsFromDisk()
+                let requests = await storage.allRequests()
                 result = requests.contains { matcher.matches($0) }
                 semaphore.signal()
             }
@@ -83,7 +83,7 @@ public func HTTPAssertNotRequested(
     let _ = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
     
     // After waiting, check that no matching request exists
-    let requests = await HTTPRequestStorage.shared.loadRequestsFromDisk()
+    let requests = await HTTPRequestStorage.shared.allRequests()
     let found = requests.contains { matcher.matches($0) }
     
     XCTAssertFalse(
@@ -110,7 +110,7 @@ public func HTTPRequests(
         queryParameters: queryParameters
     )
     
-    let requests = await HTTPRequestStorage.shared.loadRequestsFromDisk()
+    let requests = await HTTPRequestStorage.shared.allRequests()
     return requests.filter { matcher.matches($0) }
 }
 
@@ -139,7 +139,7 @@ public func HTTPAssertRequestedOnce(
             let semaphore = DispatchSemaphore(value: 0)
             var matchingCount = 0
             Task.detached {
-                let requests = await storage.loadRequestsFromDisk()
+                let requests = await storage.allRequests()
                 matchingCount = requests.filter { matcher.matches($0) }.count
                 semaphore.signal()
             }
