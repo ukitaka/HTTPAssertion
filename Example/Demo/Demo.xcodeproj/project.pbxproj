@@ -131,7 +131,6 @@
 			);
 			name = DemoUITests;
 			packageProductDependencies = (
-				E828DF502E0F960F00F5D85D /* HTTPAssertion */,
 				E828DF522E0F960F00F5D85D /* HTTPAssertionTesting */,
 				E8C794422E0F9E170013C1C1 /* HTTPAssertionLogging */,
 			);
@@ -487,11 +486,6 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		E828DF502E0F960F00F5D85D /* HTTPAssertion */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;
-			productName = HTTPAssertion;
-		};
 		E828DF522E0F960F00F5D85D /* HTTPAssertionTesting */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;

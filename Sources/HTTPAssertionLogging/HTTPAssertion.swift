@@ -1,9 +1,11 @@
 import Foundation
+import ObjectiveC
 
 /// Main entry point for HTTPAssertion library
 public final class HTTPAssertion {
     private static let lock = NSLock()
     private nonisolated(unsafe) static var isStarted = false
+    private nonisolated(unsafe) static var isSwizzled = false
     
     /// Starts HTTP request interception and logging
     public static func start() {
@@ -17,7 +19,7 @@ public final class HTTPAssertion {
         URLProtocol.registerClass(HTTPAssertionProtocol.self)
         
         // Perform method swizzling for URLSessionConfiguration
-        URLSessionConfigurationSwizzler.swizzle()
+        swizzle()
         
         // Initialize storage
         HTTPRequestStorage.shared.initialize()
@@ -34,11 +36,95 @@ public final class HTTPAssertion {
         // Unregister custom URLProtocol
         URLProtocol.unregisterClass(HTTPAssertionProtocol.self)
         
-        URLSessionConfigurationSwizzler.unswizzle()
+        unswizzle()
     }
     
     /// Clears all recorded HTTP requests
     public static func clearRecordedRequests() {
         HTTPRequestStorage.shared.clear()
+    }
+    
+    // MARK: - Method Swizzling
+    
+    private static func swizzle() {
+        guard !isSwizzled else { return }
+        isSwizzled = true
+        
+        swizzleDefaultConfiguration()
+        swizzleEphemeralConfiguration()
+    }
+    
+    private static func unswizzle() {
+        guard isSwizzled else { return }
+        isSwizzled = false
+        
+        // Re-swizzle to restore original implementations
+        swizzleDefaultConfiguration()
+        swizzleEphemeralConfiguration()
+    }
+    
+    private static func swizzleDefaultConfiguration() {
+        let originalSelector = NSSelectorFromString("defaultSessionConfiguration")
+        let swizzledSelector = #selector(URLSessionConfiguration.swizzled_defaultSessionConfiguration)
+        
+        swizzleClassMethod(
+            class: URLSessionConfiguration.self,
+            originalSelector: originalSelector,
+            swizzledSelector: swizzledSelector
+        )
+    }
+    
+    private static func swizzleEphemeralConfiguration() {
+        let originalSelector = NSSelectorFromString("ephemeralSessionConfiguration")
+        let swizzledSelector = #selector(URLSessionConfiguration.swizzled_ephemeralSessionConfiguration)
+        
+        swizzleClassMethod(
+            class: URLSessionConfiguration.self,
+            originalSelector: originalSelector,
+            swizzledSelector: swizzledSelector
+        )
+    }
+    
+    private static func swizzleClassMethod(class cls: AnyClass, originalSelector: Selector, swizzledSelector: Selector) {
+        guard let metaClass = object_getClass(cls) else { return }
+        
+        guard let originalMethod = class_getClassMethod(cls, originalSelector),
+              let swizzledMethod = class_getClassMethod(cls, swizzledSelector) else {
+            return
+        }
+        
+        let didAddMethod = class_addMethod(
+            metaClass,
+            originalSelector,
+            method_getImplementation(swizzledMethod),
+            method_getTypeEncoding(swizzledMethod)
+        )
+        
+        if didAddMethod {
+            class_replaceMethod(
+                metaClass,
+                swizzledSelector,
+                method_getImplementation(originalMethod),
+                method_getTypeEncoding(originalMethod)
+            )
+        } else {
+            method_exchangeImplementations(originalMethod, swizzledMethod)
+        }
+    }
+}
+
+// MARK: - URLSessionConfiguration Extensions
+extension URLSessionConfiguration {
+    
+    @objc class func swizzled_defaultSessionConfiguration() -> URLSessionConfiguration {
+        let configuration = swizzled_defaultSessionConfiguration()
+        configuration.protocolClasses = [HTTPAssertionProtocol.self] + (configuration.protocolClasses ?? [])
+        return configuration
+    }
+    
+    @objc class func swizzled_ephemeralSessionConfiguration() -> URLSessionConfiguration {
+        let configuration = swizzled_ephemeralSessionConfiguration()
+        configuration.protocolClasses = [HTTPAssertionProtocol.self] + (configuration.protocolClasses ?? [])
+        return configuration
     }
 }
