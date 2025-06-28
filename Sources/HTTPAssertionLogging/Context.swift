@@ -1,8 +1,8 @@
 import Foundation
 
 /// Generic context storage for sharing arbitrary Codable data between app and UI tests
-public actor ContextStorage {
-    public static let shared = ContextStorage()
+public actor Context {
+    public static let shared = Context()
     
     private let storage = FileStorage(subdirectory: "Context")
     
@@ -18,7 +18,7 @@ public actor ContextStorage {
         do {
             try await storage.store(context, forKey: key)
         } catch {
-            throw ContextStorageError.encodingFailed(error)
+            throw ContextError.encodingFailed(error)
         }
     }
     
@@ -27,7 +27,7 @@ public actor ContextStorage {
         do {
             try await storage.store(dictionary, forKey: key)
         } catch {
-            throw ContextStorageError.encodingFailed(error)
+            throw ContextError.encodingFailed(error)
         }
     }
     
@@ -36,7 +36,7 @@ public actor ContextStorage {
         do {
             return try await storage.retrieve(type, forKey: key)
         } catch {
-            throw ContextStorageError.decodingFailed(error)
+            throw ContextError.decodingFailed(error)
         }
     }
     
@@ -45,7 +45,7 @@ public actor ContextStorage {
         do {
             return try await storage.retrieve([String: String].self, forKey: key)
         } catch {
-            throw ContextStorageError.decodingFailed(error)
+            throw ContextError.decodingFailed(error)
         }
     }
     
@@ -66,7 +66,7 @@ public actor ContextStorage {
 }
 
 /// Errors that can occur during context storage operations
-public enum ContextStorageError: Error, LocalizedError {
+public enum ContextError: Error, LocalizedError {
     case noStorageDirectory
     case encodingFailed(Error)
     case decodingFailed(Error)

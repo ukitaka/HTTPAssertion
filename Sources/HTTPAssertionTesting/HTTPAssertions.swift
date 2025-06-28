@@ -168,6 +168,6 @@ public func HTTPClearRecordedRequests() async {
 /// Clears all stored data (HTTP requests and contexts) for test cleanup
 public func HTTPClearAllData() async {
     await HTTPRequestStorage.shared.clear()
-    await HTTPClearAllContexts()
+    await Context.shared.clear()
 }
 
