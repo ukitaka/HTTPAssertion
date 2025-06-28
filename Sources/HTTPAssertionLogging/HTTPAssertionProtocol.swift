@@ -6,6 +6,7 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
     
     static let httpAssertionInternalKey = "com.httpassertion.internal"
     
+    private let requestID: String = UUID().uuidString
     private var response: URLResponse?
     private var responseData: NSMutableData?
     private lazy var session: URLSession = { [unowned self] in
@@ -45,9 +46,8 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
     
     override func startLoading() {
         // Generate UUID for this request
-        let requestID = UUID().uuidString
         let mutableRequest = (request as NSURLRequest).mutableCopy() as! NSMutableURLRequest
-        URLProtocol.setProperty(requestID, forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: mutableRequest)
+        URLProtocol.setProperty(true, forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: mutableRequest)
         
         // Log the request
         Task {
@@ -99,11 +99,8 @@ extension HTTPAssertionProtocol: URLSessionDataDelegate {
             }
         }
         
-        //FIXME: request is different from mutable request in `startLoading`
         // Log the response
-        if let response = response as? HTTPURLResponse,
-           let requestID = URLProtocol.property(forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: request) as? String
-        {
+        if let response = response as? HTTPURLResponse {
             let data = (responseData ?? NSMutableData()) as Data
             Task {
                 // Update the matching request with response using UUID
