@@ -5,40 +5,26 @@ public enum HTTPRequests {
     private static let storage = FileStorage(subdirectory: "Requests")
     
     /// Initializes the storage directory
-    static func initialize() {
-        Task {
-            await storage.initialize()
-        }
+    static func initialize() async {
+        await storage.initialize()
     }
     
     /// Stores a recorded HTTP request
-    static func store(_ request: HTTPRequest) {
-        Task {
-            do {
-                try await storage.store(request, forKey: request.id)
-            } catch {
-                print("HTTPAssertion: Failed to save request to disk: \(error)")
-            }
-        }
+    static func store(_ request: HTTPRequest) async throws {
+        try await storage.store(request, forKey: request.id)
     }
     
     /// Updates a request with response information using UUID
-    static func updateResponse(requestID: String, response: Foundation.HTTPURLResponse, data: Data?, error: Error?) {
-        Task {
-            do {
-                guard let request = try await storage.retrieve(HTTPRequest.self, forKey: requestID) else { return }
-                
-                // Update the request with response
-                var updatedRequest = request
-                updatedRequest.response = HTTPRequests.HTTPURLResponse(response)
-                updatedRequest.responseData = data
-                updatedRequest.error = error.map(CodableError.init)
-                
-                try await storage.store(updatedRequest, forKey: requestID)
-            } catch {
-                print("HTTPAssertion: Failed to update response: \(error)")
-            }
-        }
+    static func updateResponse(requestID: String, response: Foundation.HTTPURLResponse, data: Data?, error: Error?) async throws {
+        guard let request = try await storage.retrieve(HTTPRequest.self, forKey: requestID) else { return }
+        
+        // Update the request with response
+        var updatedRequest = request
+        updatedRequest.response = HTTPRequests.HTTPURLResponse(response)
+        updatedRequest.responseData = data
+        updatedRequest.error = error.map(CodableError.init)
+        
+        try await storage.store(updatedRequest, forKey: requestID)
     }
     
     /// Clears all stored requests

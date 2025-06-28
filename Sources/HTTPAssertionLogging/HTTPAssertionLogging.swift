@@ -23,7 +23,7 @@ public final class HTTPAssertionLogging {
         
         // Initialize storage
         Task {
-            HTTPRequests.initialize()
+            await HTTPRequests.initialize()
             await Context.initialize()
         }
     }

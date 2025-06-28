@@ -60,7 +60,11 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
                 error: nil
             )
             
-            HTTPRequests.store(recordedRequest)
+            do {
+                try await HTTPRequests.store(recordedRequest)
+            } catch {
+                print("HTTPAssertion: Failed to save request to disk: \(error)")
+            }
         }
         
         session.dataTask(with: mutableRequest as Foundation.URLRequest).resume()
@@ -104,12 +108,16 @@ extension HTTPAssertionProtocol: URLSessionDataDelegate {
             let data = (responseData ?? NSMutableData()) as Data
             Task {
                 // Update the matching request with response using UUID
-                HTTPRequests.updateResponse(
-                    requestID: requestID,
-                    response: response,
-                    data: data,
-                    error: error
-                )
+                do {
+                    try await HTTPRequests.updateResponse(
+                        requestID: requestID,
+                        response: response,
+                        data: data,
+                        error: error
+                    )
+                } catch {
+                    print("HTTPAssertion: Failed to update response: \(error)")
+                }
             }
         }
     }
