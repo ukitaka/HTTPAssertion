@@ -1,34 +1,97 @@
 import XCTest
+import HTTPAssertionTesting
 
 final class DemoUITests: XCTestCase {
+    var app: XCUIApplication!
+    var httpTester: HTTPAssertionTester!
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
+        
+        app = XCUIApplication()
+        app.launch()
+        
+        httpTester = HTTPAssertionTester()
     }
 
     override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        app = nil
+        httpTester = nil
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
-        let app = XCUIApplication()
-        app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    func testMultipleAPICallsScenario() throws {
+        // Test scenario: User searches on Google and then calls various APIs
+        
+        // 1. Perform Google search
+        let searchField = app.textFields["Enter search query"]
+        searchField.tap()
+        searchField.typeText("Swift programming")
+        
+        let searchButton = app.buttons["Search on Google"]
+        searchButton.tap()
+        
+        Thread.sleep(forTimeInterval: 1.0)
+        
+        // 2. Call GitHub API
+        let githubButton = app.buttons["Call GitHub API"]
+        githubButton.tap()
+        
+        Thread.sleep(forTimeInterval: 1.0)
+        
+        // 3. Call HTTPBin API
+        let httpbinButton = app.buttons["Call HTTPBin API"]
+        httpbinButton.tap()
+        
+        Thread.sleep(forTimeInterval: 1.0)
+        
+        // 4. Call JSONPlaceholder API
+        let jsonButton = app.buttons["Call JSONPlaceholder API"]
+        jsonButton.tap()
+        
+        Thread.sleep(forTimeInterval: 2.0)
+        
+        let reqs = httpTester.getRequests()
+        print(reqs)
+        
+        // Verify all requests were made using assertRequest
+        httpTester.assertRequest(
+            url: "https://www.google.com/search?q=Swift%20programming",
+            method: "GET"
+        )
+        
+        httpTester.assertRequest(
+            url: "https://api.github.com/zen",
+            method: "GET"
+        )
+        
+        httpTester.assertRequest(
+            url: "https://httpbin.org/uuid",
+            method: "GET"
+        )
+        
+        httpTester.assertRequest(
+            url: "https://jsonplaceholder.typicode.com/posts/1",
+            method: "GET"
+        )
+        
+        // Verify we can get all requests at once
+        let allRequests = httpTester.getRequests()
+        XCTAssertGreaterThanOrEqual(allRequests.count, 4, "Should have at least 4 requests")
+        
+        // Also test with URL pattern
+        httpTester.assertRequest(
+            urlPattern: ".*google\\.com.*",
+            queryParameters: ["q": "Swift programming"]
+        )
     }
+}
 
-    @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
-        }
+extension XCUIElement {
+    func clearText() {
+        guard let stringValue = value as? String else { return }
+        
+        let deleteString = String(repeating: XCUIKeyboardKey.delete.rawValue, count: stringValue.count)
+        typeText(deleteString)
     }
 }
