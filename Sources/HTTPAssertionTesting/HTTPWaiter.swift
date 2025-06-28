@@ -26,11 +26,11 @@ public enum HTTPWaiter {
         
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in
-                let storage = HTTPRequests.shared
+                // Use HTTPRequests static methods directly
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: RecordedHTTPRequest? = nil
                 Task.detached {
-                    let requests = await storage.allRequests()
+                    let requests = await HTTPRequests.allRequests()
                     foundRequest = requests.first { matcher.matches($0) && $0.response != nil }
                     semaphore.signal()
                 }
@@ -43,7 +43,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.shared.allRequests()
+            let requests = await HTTPRequests.allRequests()
             return requests.first { matcher.matches($0) && $0.response != nil }
         } else {
             XCTFail(
@@ -66,11 +66,11 @@ public enum HTTPWaiter {
         
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in
-                let storage = HTTPRequests.shared
+                // Use HTTPRequests static methods directly
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: RecordedHTTPRequest? = nil
                 Task.detached {
-                    let requests = await storage.allRequests()
+                    let requests = await HTTPRequests.allRequests()
                     foundRequest = requests.first { $0.id == requestID && $0.response != nil }
                     semaphore.signal()
                 }
@@ -83,7 +83,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.shared.allRequests()
+            let requests = await HTTPRequests.allRequests()
             return requests.first { $0.id == requestID && $0.response != nil }
         } else {
             XCTFail(

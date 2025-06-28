@@ -104,7 +104,7 @@ final class DemoUITests: XCTestCase {
         try await Task.sleep(for: .seconds(1))
         
         // Retrieve the stored user context
-        if let userContext = try await Context.shared.retrieve(UserContext.self, forKey: "currentUser") {
+        if let userContext = try await Context.retrieve(UserContext.self, forKey: "currentUser") {
             XCTAssertEqual(userContext.userID, "test-user-123")
             XCTAssertEqual(userContext.username, "demouser")
             XCTAssertEqual(userContext.deviceInfo.deviceModel, "iPhone Simulator")
@@ -114,12 +114,12 @@ final class DemoUITests: XCTestCase {
         }
         
         // Test context key listing
-        let contextKeys = await Context.shared.listKeys()
+        let contextKeys = await Context.listKeys()
         XCTAssertTrue(contextKeys.contains("currentUser"), "Should have currentUser context key")
         XCTAssertTrue(contextKeys.contains("deviceInfo"), "Should have deviceInfo context key")
         
         // Test dictionary context retrieval
-        if let deviceDict = try await Context.shared.retrieve(forKey: "deviceInfo") {
+        if let deviceDict = try await Context.retrieve(forKey: "deviceInfo") {
             XCTAssertEqual(deviceDict["model"], "iPhone Simulator")
             XCTAssertNotNil(deviceDict["os"])
             XCTAssertNotNil(deviceDict["app"])

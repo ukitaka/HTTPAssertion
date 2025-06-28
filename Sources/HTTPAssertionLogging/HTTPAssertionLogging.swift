@@ -23,8 +23,8 @@ public final class HTTPAssertionLogging {
         
         // Initialize storage
         Task {
-            await HTTPRequests.shared.initialize()
-            await Context.shared.initialize()
+            HTTPRequests.initialize()
+            await Context.initialize()
         }
     }
     
@@ -45,7 +45,7 @@ public final class HTTPAssertionLogging {
     /// Clears all recorded HTTP requests
     public static func clearRecordedRequests() {
         Task {
-            await HTTPRequests.shared.clear()
+            HTTPRequests.clear()
         }
     }
     
@@ -53,7 +53,7 @@ public final class HTTPAssertionLogging {
     public static func storeContext<T: Codable & Sendable>(_ context: T, forKey key: String) {
         Task {
             do {
-                try await Context.shared.store(context, forKey: key)
+                try await Context.store(context, forKey: key)
             } catch {
                 print("HTTPAssertion: Failed to store context: \(error)")
             }
@@ -62,14 +62,14 @@ public final class HTTPAssertionLogging {
     
     /// Stores a context object with a given key asynchronously
     public static func storeContext<T: Codable & Sendable>(_ context: T, forKey key: String) async throws {
-        try await Context.shared.store(context, forKey: key)
+        try await Context.store(context, forKey: key)
     }
     
     /// Stores a dictionary context with a given key
     public static func storeContext(_ dictionary: [String: String], forKey key: String) {
         Task {
             do {
-                try await Context.shared.store(dictionary, forKey: key)
+                try await Context.store(dictionary, forKey: key)
             } catch {
                 print("HTTPAssertion: Failed to store dictionary context: \(error)")
             }
@@ -78,13 +78,13 @@ public final class HTTPAssertionLogging {
     
     /// Stores a dictionary context with a given key asynchronously
     public static func storeContext(_ dictionary: [String: String], forKey key: String) async throws {
-        try await Context.shared.store(dictionary, forKey: key)
+        try await Context.store(dictionary, forKey: key)
     }
     
     /// Clears all stored contexts
     public static func clearAllContexts() {
         Task {
-            await Context.shared.clear()
+            await Context.clear()
         }
     }
     

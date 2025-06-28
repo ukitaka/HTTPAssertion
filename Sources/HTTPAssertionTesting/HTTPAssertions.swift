@@ -26,12 +26,12 @@ public func HTTPAssertRequested(
             // Synchronous predicate check - cannot use async/await here
             // This is a limitation with current XCTest framework
             // We need to check the disk directly
-            let storage = HTTPRequests.shared
+            // Use HTTPRequests static methods directly
             // Use Task.detached to avoid actor isolation issues
             let semaphore = DispatchSemaphore(value: 0)
             var result = false
             Task.detached {
-                let requests = await storage.allRequests()
+                let requests = await HTTPRequests.allRequests()
                 result = requests.contains { matcher.matches($0) }
                 semaphore.signal()
             }
@@ -83,7 +83,7 @@ public func HTTPAssertNotRequested(
     let _ = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
     
     // After waiting, check that no matching request exists
-    let requests = await HTTPRequests.shared.allRequests()
+    let requests = await HTTPRequests.allRequests()
     let found = requests.contains { matcher.matches($0) }
     
     XCTAssertFalse(
@@ -110,7 +110,7 @@ public func HTTPRequests(
         queryParameters: queryParameters
     )
     
-    let requests = await HTTPRequests.shared.allRequests()
+    let requests = await HTTPRequests.allRequests()
     return requests.filter { matcher.matches($0) }
 }
 
@@ -135,11 +135,11 @@ public func HTTPAssertRequestedOnce(
     
     let expectation = XCTNSPredicateExpectation(
         predicate: NSPredicate { _, _ in
-            let storage = HTTPRequests.shared
+            // Use HTTPRequests static methods directly
             let semaphore = DispatchSemaphore(value: 0)
             var matchingCount = 0
             Task.detached {
-                let requests = await storage.allRequests()
+                let requests = await HTTPRequests.allRequests()
                 matchingCount = requests.filter { matcher.matches($0) }.count
                 semaphore.signal()
             }
@@ -162,12 +162,12 @@ public func HTTPAssertRequestedOnce(
 
 /// Clears all stored HTTP requests for test cleanup
 public func HTTPClearRecordedRequests() async {
-    await HTTPRequests.shared.clear()
+    HTTPRequests.clear()
 }
 
 /// Clears all stored data (HTTP requests and contexts) for test cleanup
 public func HTTPClearAllData() async {
-    await HTTPRequests.shared.clear()
-    await Context.shared.clear()
+    HTTPRequests.clear()
+    await Context.clear()
 }
 

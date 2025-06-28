@@ -26,7 +26,7 @@ actor FileStorage {
             .appendingPathComponent(subdirectory)
     }
     
-    public init(subdirectory: String) {
+    init(subdirectory: String) {
         self.subdirectory = subdirectory
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
@@ -34,7 +34,7 @@ actor FileStorage {
     }
     
     /// Initializes the storage directory
-    public func initialize() {
+    func initialize() {
         guard let directory = storageDirectory else { return }
         
         do {
@@ -45,7 +45,7 @@ actor FileStorage {
     }
     
     /// Stores a Codable object with a given key
-    public func store<T: Codable>(_ object: T, forKey key: String) throws {
+    func store<T: Codable>(_ object: T, forKey key: String) throws {
         guard let directory = storageDirectory else {
             throw FileStorageError.noStorageDirectory
         }
@@ -64,7 +64,7 @@ actor FileStorage {
     }
     
     /// Retrieves a Codable object for a given key
-    public func retrieve<T: Codable>(_ type: T.Type, forKey key: String) throws -> T? {
+    func retrieve<T: Codable>(_ type: T.Type, forKey key: String) throws -> T? {
         guard let directory = storageDirectory else {
             throw FileStorageError.noStorageDirectory
         }
@@ -84,7 +84,7 @@ actor FileStorage {
     }
     
     /// Lists all stored keys
-    public func listKeys() -> [String] {
+    func listKeys() -> [String] {
         guard let directory = storageDirectory else { return [] }
         
         do {
@@ -99,7 +99,7 @@ actor FileStorage {
     }
     
     /// Removes a stored object for a given key
-    public func remove(forKey key: String) throws {
+    func remove(forKey key: String) throws {
         guard let directory = storageDirectory else {
             throw FileStorageError.noStorageDirectory
         }
@@ -112,7 +112,7 @@ actor FileStorage {
     }
     
     /// Clears all stored objects
-    public func clear() {
+    func clear() {
         guard let directory = storageDirectory else { return }
         
         do {
@@ -126,7 +126,7 @@ actor FileStorage {
     }
     
     /// Loads all objects from disk
-    public func loadAll<T: Codable>(_ type: T.Type) -> [T] {
+    func loadAll<T: Codable>(_ type: T.Type) -> [T] {
         guard let directory = storageDirectory else { return [] }
         
         var objects: [T] = []
@@ -153,12 +153,12 @@ actor FileStorage {
 }
 
 /// Errors that can occur during file storage operations
-public enum FileStorageError: Error, LocalizedError {
+enum FileStorageError: Error, LocalizedError {
     case noStorageDirectory
     case encodingFailed(Error)
     case decodingFailed(Error)
     
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .noStorageDirectory:
             return "No storage directory available"

@@ -60,7 +60,7 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
                 error: nil
             )
             
-            await HTTPRequests.shared.store(recordedRequest)
+            HTTPRequests.store(recordedRequest)
         }
         
         session.dataTask(with: mutableRequest as URLRequest).resume()
@@ -104,7 +104,7 @@ extension HTTPAssertionProtocol: URLSessionDataDelegate {
             let data = (responseData ?? NSMutableData()) as Data
             Task {
                 // Update the matching request with response using UUID
-                await HTTPRequests.shared.updateResponse(
+                HTTPRequests.updateResponse(
                     requestID: requestID,
                     response: response,
                     data: data,
