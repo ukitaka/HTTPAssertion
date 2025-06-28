@@ -116,6 +116,17 @@ final class DemoUITests: XCTestCase {
         // Test context key listing
         let contextKeys = await HTTPListContextKeys()
         XCTAssertTrue(contextKeys.contains("currentUser"), "Should have currentUser context key")
+        XCTAssertTrue(contextKeys.contains("deviceInfo"), "Should have deviceInfo context key")
+        
+        // Test dictionary context retrieval
+        if let deviceDict = try await HTTPRetrieveContext(forKey: "deviceInfo") {
+            XCTAssertEqual(deviceDict["model"], "iPhone Simulator")
+            XCTAssertNotNil(deviceDict["os"])
+            XCTAssertNotNil(deviceDict["app"])
+            XCTAssertNotNil(deviceDict["timestamp"])
+        } else {
+            XCTFail("Device info dictionary should be available")
+        }
     }
 }
 

@@ -65,6 +65,22 @@ public final class HTTPAssertionLogging {
         try await ContextStorage.shared.store(context, forKey: key)
     }
     
+    /// Stores a dictionary context with a given key
+    public static func storeContext(_ dictionary: [String: String], forKey key: String) {
+        Task {
+            do {
+                try await ContextStorage.shared.store(dictionary, forKey: key)
+            } catch {
+                print("HTTPAssertion: Failed to store dictionary context: \(error)")
+            }
+        }
+    }
+    
+    /// Stores a dictionary context with a given key asynchronously
+    public static func storeContext(_ dictionary: [String: String], forKey key: String) async throws {
+        try await ContextStorage.shared.store(dictionary, forKey: key)
+    }
+    
     /// Clears all stored contexts
     public static func clearAllContexts() {
         Task {

@@ -63,6 +63,25 @@ public actor ContextStorage {
         }
     }
     
+    /// Stores a dictionary context with a given key
+    public func store(_ dictionary: [String: String], forKey key: String) throws {
+        guard let directory = storageDirectory else {
+            throw ContextStorageError.noStorageDirectory
+        }
+        
+        let fileURL = directory.appendingPathComponent("\(key).json")
+        
+        do {
+            let data = try encoder.encode(dictionary)
+            if fileManager.fileExists(atPath: fileURL.path) {
+                try fileManager.removeItem(at: fileURL)
+            }
+            fileManager.createFile(atPath: fileURL.path, contents: data, attributes: nil)
+        } catch {
+            throw ContextStorageError.encodingFailed(error)
+        }
+    }
+    
     /// Retrieves a context object for a given key
     public func retrieve<T: Codable>(_ type: T.Type, forKey key: String) throws -> T? {
         guard let directory = storageDirectory else {
@@ -78,6 +97,26 @@ public actor ContextStorage {
         do {
             let data = try Data(contentsOf: fileURL)
             return try decoder.decode(type, from: data)
+        } catch {
+            throw ContextStorageError.decodingFailed(error)
+        }
+    }
+    
+    /// Retrieves a dictionary context for a given key
+    public func retrieve(forKey key: String) throws -> [String: String]? {
+        guard let directory = storageDirectory else {
+            throw ContextStorageError.noStorageDirectory
+        }
+        
+        let fileURL = directory.appendingPathComponent("\(key).json")
+        
+        guard fileManager.fileExists(atPath: fileURL.path) else {
+            return nil
+        }
+        
+        do {
+            let data = try Data(contentsOf: fileURL)
+            return try decoder.decode([String: String].self, from: data)
         } catch {
             throw ContextStorageError.decodingFailed(error)
         }
