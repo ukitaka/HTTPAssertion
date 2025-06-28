@@ -25,11 +25,25 @@
 /* Begin PBXFileReference section */
 		E874161B2E0F94B600D26247 /* Demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E87416322E0F94B700D26247 /* DemoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E8BDF7E02E102E82006F2C97 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E8BDF7E52E102FE0006F2C97 /* Exceptions for "Demo" folder in "DemoUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				UserContext.swift,
+			);
+			target = E87416312E0F94B700D26247 /* DemoUITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E874161D2E0F94B600D26247 /* Demo */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E8BDF7E52E102FE0006F2C97 /* Exceptions for "Demo" folder in "DemoUITests" target */,
+			);
 			path = Demo;
 			sourceTree = "<group>";
 		};
@@ -64,6 +78,7 @@
 		E828DF4D2E0F960600F5D85D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E8BDF7E02E102E82006F2C97 /* Foundation.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

@@ -1,12 +1,14 @@
 import XCTest
 import HTTPAssertionTesting
+import HTTPAssertionLogging
+import Demo
 
 final class DemoUITests: XCTestCase {
     var app: XCUIApplication!
 
     override func setUp() async throws {
         continueAfterFailure = false
-        await HTTPClearRecordedRequests()
+        await HTTPClearAllData()
         app = await XCUIApplication()
         await app.launch()
     }
@@ -94,6 +96,26 @@ final class DemoUITests: XCTestCase {
                 XCTAssertEqual(httpbinResponse.response?.statusCode, 200, "HTTPBin API should return 200")
             }
         }
+    }
+    
+    @MainActor
+    func testContextStorage() async throws {
+        // Wait for the context to be stored on app launch
+        try await Task.sleep(for: .seconds(1))
+        
+        // Retrieve the stored user context
+        if let userContext = try await HTTPRetrieveContext(UserContext.self, forKey: "currentUser") {
+            XCTAssertEqual(userContext.userID, "test-user-123")
+            XCTAssertEqual(userContext.username, "demouser")
+            XCTAssertEqual(userContext.deviceInfo.deviceModel, "iPhone Simulator")
+            XCTAssertNotNil(userContext.sessionStartTime)
+        } else {
+            XCTFail("User context should be available")
+        }
+        
+        // Test context key listing
+        let contextKeys = await HTTPListContextKeys()
+        XCTAssertTrue(contextKeys.contains("currentUser"), "Should have currentUser context key")
     }
 }
 

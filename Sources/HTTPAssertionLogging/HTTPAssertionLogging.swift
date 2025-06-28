@@ -24,6 +24,7 @@ public final class HTTPAssertionLogging {
         // Initialize storage
         Task {
             await HTTPRequestStorage.shared.initialize()
+            await ContextStorage.shared.initialize()
         }
     }
     
@@ -45,6 +46,29 @@ public final class HTTPAssertionLogging {
     public static func clearRecordedRequests() {
         Task {
             await HTTPRequestStorage.shared.clear()
+        }
+    }
+    
+    /// Stores a context object with a given key
+    public static func storeContext<T: Codable & Sendable>(_ context: T, forKey key: String) {
+        Task {
+            do {
+                try await ContextStorage.shared.store(context, forKey: key)
+            } catch {
+                print("HTTPAssertion: Failed to store context: \(error)")
+            }
+        }
+    }
+    
+    /// Stores a context object with a given key asynchronously
+    public static func storeContext<T: Codable & Sendable>(_ context: T, forKey key: String) async throws {
+        try await ContextStorage.shared.store(context, forKey: key)
+    }
+    
+    /// Clears all stored contexts
+    public static func clearAllContexts() {
+        Task {
+            await ContextStorage.shared.clear()
         }
     }
     

@@ -1,15 +1,30 @@
 import SwiftUI
+import HTTPAssertionLogging
 
 struct ContentView: View {
     @State private var searchQuery = ""
     @State private var isLoading = false
     @State private var lastRequestInfo = ""
+    @State private var contextStored = false
     
     var body: some View {
         VStack(spacing: 20) {
             Text("HTTP Request Demo")
                 .font(.largeTitle)
                 .padding()
+            
+            // Context Storage Section
+            HStack {
+                Button("Store User Context") {
+                    storeUserContext()
+                }
+                .buttonStyle(.borderedProminent)
+                
+                if contextStored {
+                    Text("✓ Context stored")
+                        .foregroundColor(.green)
+                }
+            }
             
             TextField("Enter search query", text: $searchQuery)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -52,6 +67,10 @@ struct ContentView: View {
             Spacer()
         }
         .padding()
+        .onAppear {
+            // Store initial context when view appears
+            storeUserContext()
+        }
     }
     
     private func performGoogleSearch() {
@@ -106,6 +125,31 @@ struct ContentView: View {
             }
         }
         task.resume()
+    }
+    
+    private func storeUserContext() {
+        let deviceInfo = DeviceInfo(
+            deviceModel: "iPhone Simulator",
+            osVersion: UIDevice.current.systemVersion,
+            appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        )
+        
+        let userContext = UserContext(
+            userID: "test-user-123",
+            username: "demouser",
+            deviceInfo: deviceInfo
+        )
+        
+        Task {
+            do {
+                try await HTTPAssertionLogging.storeContext(userContext, forKey: "currentUser")
+                await MainActor.run {
+                    contextStored = true
+                }
+            } catch {
+                print("Failed to store context: \(error)")
+            }
+        }
     }
 }
 

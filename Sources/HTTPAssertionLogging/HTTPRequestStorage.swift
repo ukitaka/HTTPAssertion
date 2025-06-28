@@ -122,7 +122,10 @@ public actor HTTPRequestStorage {
         
         do {
             let data = try encoder.encode(request)
-            try data.write(to: fileURL)
+            if fileManager.fileExists(atPath: fileURL.path) {
+                try fileManager.removeItem(at: fileURL)
+            }
+            fileManager.createFile(atPath: fileURL.path, contents: data, attributes: nil)
         } catch {
             print("HTTPAssertion: Failed to save request to disk: \(error)")
         }
