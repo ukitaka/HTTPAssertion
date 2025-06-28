@@ -23,7 +23,7 @@ public final class HTTPAssertionLogging {
         
         // Initialize storage
         Task {
-            await HTTPRequestStorage.shared.initialize()
+            await HTTPRequests.shared.initialize()
             await Context.shared.initialize()
         }
     }
@@ -45,7 +45,7 @@ public final class HTTPAssertionLogging {
     /// Clears all recorded HTTP requests
     public static func clearRecordedRequests() {
         Task {
-            await HTTPRequestStorage.shared.clear()
+            await HTTPRequests.shared.clear()
         }
     }
     

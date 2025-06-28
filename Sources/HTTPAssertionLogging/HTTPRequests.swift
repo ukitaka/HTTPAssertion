@@ -1,8 +1,8 @@
 import Foundation
 
 /// Manages storage of HTTP requests to shared directory
-public actor HTTPRequestStorage {
-    public static let shared = HTTPRequestStorage()
+public actor HTTPRequests {
+    public static let shared = HTTPRequests()
     
     private let storage = FileStorage(subdirectory: "Requests")
     

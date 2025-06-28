@@ -26,7 +26,7 @@ public enum HTTPWaiter {
         
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in
-                let storage = HTTPRequestStorage.shared
+                let storage = HTTPRequests.shared
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: RecordedHTTPRequest? = nil
                 Task.detached {
@@ -43,7 +43,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequestStorage.shared.allRequests()
+            let requests = await HTTPRequests.shared.allRequests()
             return requests.first { matcher.matches($0) && $0.response != nil }
         } else {
             XCTFail(
@@ -66,7 +66,7 @@ public enum HTTPWaiter {
         
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in
-                let storage = HTTPRequestStorage.shared
+                let storage = HTTPRequests.shared
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: RecordedHTTPRequest? = nil
                 Task.detached {
@@ -83,7 +83,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequestStorage.shared.allRequests()
+            let requests = await HTTPRequests.shared.allRequests()
             return requests.first { $0.id == requestID && $0.response != nil }
         } else {
             XCTFail(

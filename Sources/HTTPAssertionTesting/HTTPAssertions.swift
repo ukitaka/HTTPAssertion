@@ -26,7 +26,7 @@ public func HTTPAssertRequested(
             // Synchronous predicate check - cannot use async/await here
             // This is a limitation with current XCTest framework
             // We need to check the disk directly
-            let storage = HTTPRequestStorage.shared
+            let storage = HTTPRequests.shared
             // Use Task.detached to avoid actor isolation issues
             let semaphore = DispatchSemaphore(value: 0)
             var result = false
@@ -83,7 +83,7 @@ public func HTTPAssertNotRequested(
     let _ = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
     
     // After waiting, check that no matching request exists
-    let requests = await HTTPRequestStorage.shared.allRequests()
+    let requests = await HTTPRequests.shared.allRequests()
     let found = requests.contains { matcher.matches($0) }
     
     XCTAssertFalse(
@@ -110,7 +110,7 @@ public func HTTPRequests(
         queryParameters: queryParameters
     )
     
-    let requests = await HTTPRequestStorage.shared.allRequests()
+    let requests = await HTTPRequests.shared.allRequests()
     return requests.filter { matcher.matches($0) }
 }
 
@@ -135,7 +135,7 @@ public func HTTPAssertRequestedOnce(
     
     let expectation = XCTNSPredicateExpectation(
         predicate: NSPredicate { _, _ in
-            let storage = HTTPRequestStorage.shared
+            let storage = HTTPRequests.shared
             let semaphore = DispatchSemaphore(value: 0)
             var matchingCount = 0
             Task.detached {
@@ -162,12 +162,12 @@ public func HTTPAssertRequestedOnce(
 
 /// Clears all stored HTTP requests for test cleanup
 public func HTTPClearRecordedRequests() async {
-    await HTTPRequestStorage.shared.clear()
+    await HTTPRequests.shared.clear()
 }
 
 /// Clears all stored data (HTTP requests and contexts) for test cleanup
 public func HTTPClearAllData() async {
-    await HTTPRequestStorage.shared.clear()
+    await HTTPRequests.shared.clear()
     await Context.shared.clear()
 }
 
