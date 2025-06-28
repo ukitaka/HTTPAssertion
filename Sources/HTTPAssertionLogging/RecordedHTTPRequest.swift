@@ -2,14 +2,14 @@ import Foundation
 
 /// Represents a recorded HTTP request and its response
 public struct RecordedHTTPRequest: Codable, Sendable {
-    public let id: UUID
+    public let id: String
     public let timestamp: Date
     public let request: CodableURLRequest
     public var response: CodableHTTPURLResponse?
     public var responseData: Data?
     public var error: CodableError?
     
-    init(id: UUID, timestamp: Date, request: URLRequest, response: HTTPURLResponse?, responseData: Data?, error: Error?) {
+    init(id: String, timestamp: Date, request: URLRequest, response: HTTPURLResponse?, responseData: Data?, error: Error?) {
         self.id = id
         self.timestamp = timestamp
         self.request = CodableURLRequest(request)
@@ -33,15 +33,6 @@ public struct CodableURLRequest: Codable, Sendable {
         self.allHTTPHeaderFields = request.allHTTPHeaderFields
         self.httpBody = request.httpBody ?? request.httpBodyStream?.readData()
         self.timeoutInterval = request.timeoutInterval
-    }
-    
-    var urlRequest: URLRequest {
-        var request = URLRequest(url: url ?? URL(string: "invalid://")!)
-        request.httpMethod = httpMethod
-        request.allHTTPHeaderFields = allHTTPHeaderFields
-        request.httpBody = httpBody
-        request.timeoutInterval = timeoutInterval
-        return request
     }
 }
 

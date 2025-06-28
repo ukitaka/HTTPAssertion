@@ -44,11 +44,25 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
     }
     
     override func startLoading() {
-        // Log the request
-        HTTPRequestLogger.shared.logRequest(request)
-        
+        // Generate UUID for this request
+        let requestID = UUID()
         let mutableRequest = (request as NSURLRequest).mutableCopy() as! NSMutableURLRequest
-        URLProtocol.setProperty(true, forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: mutableRequest)
+        URLProtocol.setProperty(requestID.uuidString, forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: mutableRequest)
+
+        // Log the request
+        Task {
+            let recordedRequest = RecordedHTTPRequest(
+                id: requestID.uuidString,
+                timestamp: Date(),
+                request: request,
+                response: nil,
+                responseData: nil,
+                error: nil
+            )
+            
+            await HTTPRequestStorage.shared.store(recordedRequest)
+        }
+        
         session.dataTask(with: mutableRequest as URLRequest).resume()
     }
     
@@ -86,14 +100,19 @@ extension HTTPAssertionProtocol: URLSessionDataDelegate {
         }
         
         // Log the response
-        if let response = response as? HTTPURLResponse {
+        if let response = response as? HTTPURLResponse,
+           let requestIDString = URLProtocol.property(forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: request) as? String,
+           let requestID = UUID(uuidString: requestIDString) {
             let data = (responseData ?? NSMutableData()) as Data
-            HTTPRequestLogger.shared.logResponse(
-                for: request,
-                response: response,
-                data: data,
-                error: error
-            )
+            Task {
+                // Update the matching request with response using UUID
+                await HTTPRequestStorage.shared.updateResponse(
+                    requestID: requestID.uuidString,
+                    response: response,
+                    data: data,
+                    error: error
+                )
+            }
         }
     }
     

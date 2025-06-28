@@ -4,7 +4,7 @@ import Foundation
 public actor HTTPRequestStorage {
     public static let shared = HTTPRequestStorage()
     
-    private var requests: [UUID: RecordedHTTPRequest] = [:]
+    private var requests: [String: RecordedHTTPRequest] = [:]
     private let fileManager = FileManager.default
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
@@ -51,15 +51,9 @@ public actor HTTPRequestStorage {
         saveRequestToDisk(request)
     }
     
-    /// Updates a request with response information
-    func updateResponse(for urlRequest: URLRequest, response: HTTPURLResponse, data: Data?, error: Error?) {
-        // Find the most recent matching request
-        let matchingRequest = requests.values
-            .filter { $0.request.url == urlRequest.url && $0.response == nil }
-            .sorted { $0.timestamp > $1.timestamp }
-            .first
-        
-        guard let request = matchingRequest else { return }
+    /// Updates a request with response information using UUID
+    func updateResponse(requestID: String, response: HTTPURLResponse, data: Data?, error: Error?) {
+        guard let request = requests[requestID] else { return }
         
         // Update the request with response
         var updatedRequest = request
@@ -67,7 +61,7 @@ public actor HTTPRequestStorage {
         updatedRequest.responseData = data
         updatedRequest.error = error.map(CodableError.init)
         
-        requests[request.id] = updatedRequest
+        requests[requestID] = updatedRequest
         saveRequestToDisk(updatedRequest)
     }
     
@@ -124,7 +118,7 @@ public actor HTTPRequestStorage {
     private func saveRequestToDisk(_ request: RecordedHTTPRequest) {
         guard let directory = storageDirectory else { return }
         
-        let fileURL = directory.appendingPathComponent("\(request.id.uuidString).json")
+        let fileURL = directory.appendingPathComponent("\(request.id).json")
         
         do {
             let data = try encoder.encode(request)
