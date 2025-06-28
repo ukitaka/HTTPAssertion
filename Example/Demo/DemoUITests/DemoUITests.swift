@@ -8,14 +8,14 @@ final class DemoUITests: XCTestCase {
 
     override func setUp() async throws {
         continueAfterFailure = false
-        await HTTPClearAllData()
         app = await XCUIApplication()
         await app.launch()
     }
     
 
     override func tearDown() async throws {
-        await HTTPClearRecordedRequests()
+        await Context.clear()
+        await HTTPRequests.clear()
         app = nil
     }
 

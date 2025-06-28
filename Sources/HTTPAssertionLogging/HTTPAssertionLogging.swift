@@ -42,52 +42,6 @@ public final class HTTPAssertionLogging {
         unswizzle()
     }
     
-    /// Clears all recorded HTTP requests
-    public static func clearRecordedRequests() {
-        Task {
-            HTTPRequests.clear()
-        }
-    }
-    
-    /// Stores a context object with a given key
-    public static func storeContext<T: Codable & Sendable>(_ context: T, forKey key: String) {
-        Task {
-            do {
-                try await Context.store(context, forKey: key)
-            } catch {
-                print("HTTPAssertion: Failed to store context: \(error)")
-            }
-        }
-    }
-    
-    /// Stores a context object with a given key asynchronously
-    public static func storeContext<T: Codable & Sendable>(_ context: T, forKey key: String) async throws {
-        try await Context.store(context, forKey: key)
-    }
-    
-    /// Stores a dictionary context with a given key
-    public static func storeContext(_ dictionary: [String: String], forKey key: String) {
-        Task {
-            do {
-                try await Context.store(dictionary, forKey: key)
-            } catch {
-                print("HTTPAssertion: Failed to store dictionary context: \(error)")
-            }
-        }
-    }
-    
-    /// Stores a dictionary context with a given key asynchronously
-    public static func storeContext(_ dictionary: [String: String], forKey key: String) async throws {
-        try await Context.store(dictionary, forKey: key)
-    }
-    
-    /// Clears all stored contexts
-    public static func clearAllContexts() {
-        Task {
-            await Context.clear()
-        }
-    }
-    
     // MARK: - Method Swizzling
     
     private static func swizzle() {

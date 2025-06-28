@@ -159,15 +159,3 @@ public func HTTPAssertRequestedOnce(
         line: line
     )
 }
-
-/// Clears all stored HTTP requests for test cleanup
-public func HTTPClearRecordedRequests() async {
-    HTTPRequests.clear()
-}
-
-/// Clears all stored data (HTTP requests and contexts) for test cleanup
-public func HTTPClearAllData() async {
-    HTTPRequests.clear()
-    await Context.clear()
-}
-

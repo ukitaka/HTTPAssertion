@@ -143,7 +143,7 @@ struct ContentView: View {
         Task {
             do {
                 // Store as Codable object
-                try await HTTPAssertionLogging.storeContext(userContext, forKey: "currentUser")
+                try await Context.store(userContext, forKey: "currentUser")
                 
                 // Also store device info as dictionary
                 let deviceDict: [String: String] = [
@@ -152,7 +152,7 @@ struct ContentView: View {
                     "app": deviceInfo.appVersion,
                     "timestamp": String(Date().timeIntervalSince1970)
                 ]
-                try await HTTPAssertionLogging.storeContext(deviceDict, forKey: "deviceInfo")
+                try await Context.store(deviceDict, forKey: "deviceInfo")
                 
                 await MainActor.run {
                     contextStored = true

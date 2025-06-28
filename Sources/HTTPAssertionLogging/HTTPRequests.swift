@@ -42,10 +42,8 @@ public enum HTTPRequests {
     }
     
     /// Clears all stored requests
-    public static func clear() {
-        Task {
-            await storage.clear()
-        }
+    public static func clear() async {
+        await storage.clear()
     }
     
     /// Gets all stored requests
