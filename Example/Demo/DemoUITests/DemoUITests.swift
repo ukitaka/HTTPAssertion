@@ -47,23 +47,23 @@ final class DemoUITests: XCTestCase {
         
         Thread.sleep(forTimeInterval: 2.0)
         
-        // Verify all requests were made using assertRequest
-        assertRequest(
+        // Verify all requests were made using HTTPAssertRequested
+        HTTPAssertRequested(
             urlPattern: ".*google\\.com/search.*",
             method: "GET", queryParameters: ["q": "Swift programming"]
         )
         
-        assertRequest(
+        HTTPAssertRequested(
             url: "https://api.github.com/zen",
             method: "GET"
         )
         
-        assertRequest(
+        HTTPAssertRequested(
             url: "https://httpbin.org/uuid",
             method: "GET"
         )
         
-        assertRequest(
+        HTTPAssertRequested(
             url: "https://jsonplaceholder.typicode.com/posts/1",
             method: "GET"
         )

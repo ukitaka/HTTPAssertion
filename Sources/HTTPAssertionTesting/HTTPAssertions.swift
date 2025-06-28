@@ -3,7 +3,7 @@ import XCTest
 import HTTPAssertionLogging
 
 /// Asserts that a request matching the given criteria exists
-public func assertRequest(
+public func HTTPAssertRequested(
     url: String? = nil,
     urlPattern: String? = nil,
     method: String? = nil,
@@ -21,20 +21,19 @@ public func assertRequest(
         queryParameters: queryParameters
     )
     
-    let deadline = Date().addingTimeInterval(timeout)
-    var found = false
+    let expectation = XCTNSPredicateExpectation(
+        predicate: NSPredicate { _, _ in
+            let requests = HTTPRequestStorage.shared.loadRequestsFromDisk()
+            return requests.contains { matcher.matches($0) }
+        },
+        object: nil
+    )
     
-    while Date() < deadline && !found {
-        let requests = HTTPRequestStorage.shared.loadRequestsFromDisk()
-        found = requests.contains { matcher.matches($0) }
-        
-        if !found {
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-    }
+    let result = XCTWaiter.wait(for: [expectation], timeout: timeout)
     
-    XCTAssertTrue(
-        found,
+    XCTAssertEqual(
+        result,
+        .completed,
         "No HTTP request found matching criteria: \(matcher.description)",
         file: (file),
         line: line
@@ -42,7 +41,7 @@ public func assertRequest(
 }
 
 /// Asserts that no request matching the given criteria exists
-public func assertNoRequest(
+public func HTTPAssertNotRequested(
     url: String? = nil,
     urlPattern: String? = nil,
     method: String? = nil,
@@ -60,8 +59,18 @@ public func assertNoRequest(
         queryParameters: queryParameters
     )
     
-    Thread.sleep(forTimeInterval: timeout)
+    // Wait a short time to ensure any pending requests are processed
+    let expectation = XCTNSPredicateExpectation(
+        predicate: NSPredicate { _, _ in
+            // Always return false to wait for the full timeout period
+            false
+        },
+        object: nil
+    )
     
+    let _ = XCTWaiter.wait(for: [expectation], timeout: timeout)
+    
+    // After waiting, check that no matching request exists
     let requests = HTTPRequestStorage.shared.loadRequestsFromDisk()
     let found = requests.contains { matcher.matches($0) }
     
@@ -72,10 +81,3 @@ public func assertNoRequest(
         line: line
     )
 }
-
-
-/// Clears all recorded requests (useful for test cleanup)
-public func clearAllRequests() {
-    HTTPRequestStorage.shared.clear()
-}
-
