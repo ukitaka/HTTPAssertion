@@ -2,7 +2,7 @@ import Foundation
 import ObjectiveC
 
 /// Main entry point for HTTPAssertion library
-public final class HTTPAssertion {
+public final class HTTPAssertionLogging {
     private static let lock = NSLock()
     private nonisolated(unsafe) static var isStarted = false
     private nonisolated(unsafe) static var isSwizzled = false
