@@ -93,3 +93,75 @@ public func HTTPAssertNotRequested(
         line: line
     )
 }
+
+/// Gets all requests matching the given criteria
+public func HTTPRequests(
+    url: String? = nil,
+    urlPattern: String? = nil,
+    method: String? = nil,
+    headers: [String: String]? = nil,
+    queryParameters: [String: String]? = nil
+) async -> [RecordedHTTPRequest] {
+    let matcher = HTTPRequestMatcher(
+        url: url,
+        urlPattern: urlPattern,
+        method: method,
+        headers: headers,
+        queryParameters: queryParameters
+    )
+    
+    let requests = await HTTPRequestStorage.shared.loadRequestsFromDisk()
+    return requests.filter { matcher.matches($0) }
+}
+
+/// Asserts that exactly one request matching the given criteria exists
+public func HTTPAssertRequestedOnce(
+    url: String? = nil,
+    urlPattern: String? = nil,
+    method: String? = nil,
+    headers: [String: String]? = nil,
+    queryParameters: [String: String]? = nil,
+    timeout: TimeInterval = 5.0,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    let matcher = HTTPRequestMatcher(
+        url: url,
+        urlPattern: urlPattern,
+        method: method,
+        headers: headers,
+        queryParameters: queryParameters
+    )
+    
+    let expectation = XCTNSPredicateExpectation(
+        predicate: NSPredicate { _, _ in
+            let storage = HTTPRequestStorage.shared
+            let semaphore = DispatchSemaphore(value: 0)
+            var matchingCount = 0
+            Task.detached {
+                let requests = await storage.loadRequestsFromDisk()
+                matchingCount = requests.filter { matcher.matches($0) }.count
+                semaphore.signal()
+            }
+            semaphore.wait()
+            return matchingCount == 1
+        },
+        object: nil
+    )
+    
+    let result = XCTWaiter.wait(for: [expectation], timeout: timeout)
+    
+    XCTAssertEqual(
+        result,
+        .completed,
+        "Expected exactly one HTTP request matching criteria: \(matcher.description)",
+        file: (file),
+        line: line
+    )
+}
+
+/// Clears all stored HTTP requests for test cleanup
+public func HTTPClearRecordedRequests() async {
+    await HTTPRequestStorage.shared.clear()
+}
+

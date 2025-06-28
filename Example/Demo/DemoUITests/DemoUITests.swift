@@ -4,19 +4,21 @@ import HTTPAssertionTesting
 final class DemoUITests: XCTestCase {
     var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    override func setUp() async throws {
         continueAfterFailure = false
-        
-        app = XCUIApplication()
-        app.launch()
+        await HTTPClearRecordedRequests()
+        app = await XCUIApplication()
+        await app.launch()
     }
+    
 
-    override func tearDownWithError() throws {
+    override func tearDown() async throws {
+        await HTTPClearRecordedRequests()
         app = nil
     }
 
     @MainActor
-    func testMultipleAPICallsScenario() throws {
+    func testMultipleAPICallsScenario() async throws {
         // Test scenario: User searches on Google and then calls various APIs
         
         // 1. Perform Google search
@@ -27,25 +29,25 @@ final class DemoUITests: XCTestCase {
         let searchButton = app.buttons["Search on Google"]
         searchButton.tap()
         
-        Thread.sleep(forTimeInterval: 1.0)
+        try await Task.sleep(for: .seconds(1))
         
         // 2. Call GitHub API
         let githubButton = app.buttons["Call GitHub API"]
         githubButton.tap()
         
-        Thread.sleep(forTimeInterval: 1.0)
+        try await Task.sleep(for: .seconds(1))
         
         // 3. Call HTTPBin API
         let httpbinButton = app.buttons["Call HTTPBin API"]
         httpbinButton.tap()
         
-        Thread.sleep(forTimeInterval: 1.0)
+        try await Task.sleep(for: .seconds(1))
         
         // 4. Call JSONPlaceholder API
         let jsonButton = app.buttons["Call JSONPlaceholder API"]
         jsonButton.tap()
         
-        Thread.sleep(forTimeInterval: 2.0)
+        try await Task.sleep(for: .seconds(2))
         
         // Verify all requests were made using HTTPAssertRequested
         HTTPAssertRequested(
@@ -68,6 +70,30 @@ final class DemoUITests: XCTestCase {
             method: "GET"
         )
         
+        // Test new methods: assert exactly one Google search
+        HTTPAssertRequestedOnce(
+            urlPattern: ".*google\\.com/search.*",
+            method: "GET"
+        )
+        
+        // Test getting requests and checking count
+        let googleRequests = await HTTPRequests(urlPattern: ".*google\\.com/search.*")
+        XCTAssertEqual(googleRequests.count, 1, "Should have exactly one Google search request")
+        
+        // Test waiting for response using URL criteria
+        if let githubResponse = await HTTPWaiter.waitForResponse(url: "https://api.github.com/zen") {
+            XCTAssertNotNil(githubResponse.response, "GitHub request should have received a response")
+            XCTAssertEqual(githubResponse.response?.statusCode, 200, "GitHub API should return 200")
+        }
+        
+        // Test waiting for response using specific RecordedHTTPRequest
+        let httpbinRequests = await HTTPRequests(url: "https://httpbin.org/uuid")
+        if let httpbinRequest = httpbinRequests.first {
+            if let httpbinResponse = await HTTPWaiter.waitForResponse(for: httpbinRequest) {
+                XCTAssertNotNil(httpbinResponse.response, "HTTPBin request should have received a response")
+                XCTAssertEqual(httpbinResponse.response?.statusCode, 200, "HTTPBin API should return 200")
+            }
+        }
     }
 }
 
