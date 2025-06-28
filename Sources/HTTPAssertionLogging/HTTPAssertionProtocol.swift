@@ -51,7 +51,7 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
         
         // Log the request
         Task {
-            let recordedRequest = RecordedHTTPRequest(
+            let recordedRequest = HTTPRequests.HTTPRequest(
                 id: requestID,
                 timestamp: Date(),
                 request: request,
@@ -63,7 +63,7 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
             HTTPRequests.store(recordedRequest)
         }
         
-        session.dataTask(with: mutableRequest as URLRequest).resume()
+        session.dataTask(with: mutableRequest as Foundation.URLRequest).resume()
     }
     
     override func stopLoading() {

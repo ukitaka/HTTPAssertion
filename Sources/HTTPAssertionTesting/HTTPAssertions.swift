@@ -101,7 +101,7 @@ public func HTTPRequests(
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil
-) async -> [RecordedHTTPRequest] {
+) async -> [HTTPRequests.HTTPRequest] {
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,

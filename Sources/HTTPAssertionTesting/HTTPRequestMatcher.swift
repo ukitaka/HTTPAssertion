@@ -19,7 +19,7 @@ struct HTTPRequestMatcher {
         return parts.joined(separator: ", ")
     }
     
-    func matches(_ request: RecordedHTTPRequest) -> Bool {
+    func matches(_ request: HTTPRequests.HTTPRequest) -> Bool {
         // Check URL
         if let url = url {
             guard request.request.url?.absoluteString == url else { return false }

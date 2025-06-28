@@ -15,7 +15,7 @@ public enum HTTPWaiter {
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
-    ) async -> RecordedHTTPRequest? {
+    ) async -> HTTPRequests.HTTPRequest? {
         let matcher = HTTPRequestMatcher(
             url: url,
             urlPattern: urlPattern,
@@ -25,10 +25,10 @@ public enum HTTPWaiter {
         )
         
         let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in
+            predicate: NSPredicate { _, _ -> Bool in
                 // Use HTTPRequests static methods directly
                 let semaphore = DispatchSemaphore(value: 0)
-                var foundRequest: RecordedHTTPRequest? = nil
+                var foundRequest: HTTPRequests.HTTPRequest? = nil
                 Task.detached {
                     let requests = await HTTPRequests.allRequests()
                     foundRequest = requests.first { matcher.matches($0) && $0.response != nil }
@@ -57,18 +57,18 @@ public enum HTTPWaiter {
     
     /// Waits for a specific recorded request to receive a response
     public static func waitForResponse(
-        for recordedRequest: RecordedHTTPRequest,
+        for recordedRequest: HTTPRequests.HTTPRequest,
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
-    ) async -> RecordedHTTPRequest? {
+    ) async -> HTTPRequests.HTTPRequest? {
         let requestID = recordedRequest.id
         
         let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in
+            predicate: NSPredicate { _, _ -> Bool in
                 // Use HTTPRequests static methods directly
                 let semaphore = DispatchSemaphore(value: 0)
-                var foundRequest: RecordedHTTPRequest? = nil
+                var foundRequest: HTTPRequests.HTTPRequest? = nil
                 Task.detached {
                     let requests = await HTTPRequests.allRequests()
                     foundRequest = requests.first { $0.id == requestID && $0.response != nil }
