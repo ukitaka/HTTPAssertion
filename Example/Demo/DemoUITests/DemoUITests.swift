@@ -3,20 +3,16 @@ import HTTPAssertionTesting
 
 final class DemoUITests: XCTestCase {
     var app: XCUIApplication!
-    var httpTester: HTTPAssertionTester!
 
     override func setUpWithError() throws {
         continueAfterFailure = false
         
         app = XCUIApplication()
         app.launch()
-        
-        httpTester = HTTPAssertionTester()
     }
 
     override func tearDownWithError() throws {
         app = nil
-        httpTester = nil
     }
 
     @MainActor
@@ -52,29 +48,26 @@ final class DemoUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 2.0)
         
         // Verify all requests were made using assertRequest
-        httpTester.assertRequest(
+        assertRequest(
             urlPattern: ".*google\\.com/search.*",
             method: "GET", queryParameters: ["q": "Swift programming"]
         )
         
-        httpTester.assertRequest(
+        assertRequest(
             url: "https://api.github.com/zen",
             method: "GET"
         )
         
-        httpTester.assertRequest(
+        assertRequest(
             url: "https://httpbin.org/uuid",
             method: "GET"
         )
         
-        httpTester.assertRequest(
+        assertRequest(
             url: "https://jsonplaceholder.typicode.com/posts/1",
             method: "GET"
         )
         
-        // Verify we can get all requests at once
-        let allRequests = httpTester.requests()
-        XCTAssertGreaterThanOrEqual(allRequests.count, 4, "Should have at least 4 requests")
     }
 }
 
