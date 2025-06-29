@@ -10,6 +10,5 @@ public extension Context {
     static func requestUpdate(app: XCUIApplication) async throws {
         let url = URL(string: "httpassertion://context/update")!
         await app.open(url)
-        try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
     }
 }

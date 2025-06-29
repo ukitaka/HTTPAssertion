@@ -152,68 +152,114 @@ public extension XCTestCase {
     
     // MARK: - Context Wait Methods
     
-    /// Waits for a context value to become available or change
+    /// Requests context update from the app (for XCUITest)
     @available(macOS 13.3, iOS 16.4, *)
-    func waitForContext<T: Codable & Sendable & Equatable>(
+    func requestContextUpdate(app: XCUIApplication) async throws {
+        try await Context.requestUpdate(app: app)
+    }
+    
+    /// Waits for a context value to be updated or become available
+    @available(macOS 13.3, iOS 16.4, *)
+    func waitForContextUpdate<T: Codable & Sendable & Equatable>(
         _ type: T.Type,
         forKey key: String,
         expectedValue: T? = nil,
         app: XCUIApplication,
-        timeout: TimeInterval = 10.0
+        timeout: TimeInterval = 10.0,
+        file: StaticString = #filePath,
+        line: UInt = #line
     ) async throws -> T? {
-        let startTime = Date()
-        
-        while Date().timeIntervalSince(startTime) < timeout {
-            // Request context update
-            try await Context.requestUpdate(app: app)
-            
-            // Try to get the context
-            if let value = try await Context.retrieve(type, forKey: key) {
-                if let expected = expectedValue {
-                    if value == expected {
-                        return value
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ -> Bool in
+                let semaphore = DispatchSemaphore(value: 0)
+                var foundValue: T? = nil
+                Task.detached {
+                    // Request context update
+                    try? await Context.requestUpdate(app: app)
+                    
+                    // Try to get the context
+                    if let value = try? await Context.retrieve(type, forKey: key) {
+                        if let expected = expectedValue {
+                            if value == expected {
+                                foundValue = value
+                            }
+                        } else {
+                            foundValue = value
+                        }
                     }
-                } else {
-                    return value
+                    semaphore.signal()
                 }
-            }
-            
-            // Wait before retrying
-            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-        }
+                semaphore.wait()
+                return foundValue != nil
+            },
+            object: nil
+        )
         
-        return nil
+        let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
+        
+        if result == .completed {
+            // Request context update one more time and retrieve the final value
+            try await Context.requestUpdate(app: app)
+            return try await Context.retrieve(type, forKey: key)
+        } else {
+            XCTFail(
+                "Context value for key '\(key)' was not found within timeout",
+                file: file,
+                line: line
+            )
+            return nil
+        }
     }
     
-    /// Waits for a dictionary context to become available or change
+    /// Waits for a dictionary context to be updated or become available
     @available(macOS 13.3, iOS 16.4, *)
-    func waitForContext(
+    func waitForContextUpdate(
         forKey key: String,
         expectedValue: [String: String]? = nil,
         app: XCUIApplication,
-        timeout: TimeInterval = 10.0
+        timeout: TimeInterval = 10.0,
+        file: StaticString = #filePath,
+        line: UInt = #line
     ) async throws -> [String: String]? {
-        let startTime = Date()
-        
-        while Date().timeIntervalSince(startTime) < timeout {
-            // Request context update
-            try await Context.requestUpdate(app: app)
-            
-            // Try to get the context
-            if let value = try await Context.retrieve(forKey: key) {
-                if let expected = expectedValue {
-                    if value == expected {
-                        return value
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ -> Bool in
+                let semaphore = DispatchSemaphore(value: 0)
+                var foundValue: [String: String]? = nil
+                Task.detached {
+                    // Request context update
+                    try? await Context.requestUpdate(app: app)
+                    
+                    // Try to get the context
+                    if let value = try? await Context.retrieve(forKey: key) {
+                        if let expected = expectedValue {
+                            if value == expected {
+                                foundValue = value
+                            }
+                        } else {
+                            foundValue = value
+                        }
                     }
-                } else {
-                    return value
+                    semaphore.signal()
                 }
-            }
-            
-            // Wait before retrying
-            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-        }
+                semaphore.wait()
+                return foundValue != nil
+            },
+            object: nil
+        )
         
-        return nil
+        let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
+        
+        if result == .completed {
+            // Request context update one more time and retrieve the final value
+            try await Context.requestUpdate(app: app)
+            return try await Context.retrieve(forKey: key)
+        } else {
+            XCTFail(
+                "Context value for key '\(key)' was not found within timeout",
+                file: file,
+                line: line
+            )
+            return nil
+        }
     }
 }
