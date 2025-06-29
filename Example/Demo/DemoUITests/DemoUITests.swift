@@ -196,6 +196,232 @@ final class DemoUITests: XCTestCase {
             XCTAssertEqual(request.request.url?.absoluteString, "https://httpbin.org/uuid")
         }
     }
+    
+    @MainActor
+    func testHeaderAndQueryParameterAssertions() async throws {
+        // Test header and query parameter assertions with various API calls
+        
+        // 1. Test GitHub API with custom headers
+        try await HTTPPerformActionAndAssertRequested(
+            url: "https://api.github.com/zen",
+            method: "GET"
+        ) {
+            let githubButton = app.buttons["Call GitHub API"]
+            githubButton.tap()
+        } onRequested: { request in
+            // Test header assertions
+            HTTPAssertHeader(request, name: "Accept", value: "application/json")
+            HTTPAssertHeader(request, name: "User-Agent", value: "HTTPAssertion-Demo/1.0")
+            HTTPAssertHeader(request, name: "Authorization", value: "Bearer demo-token")
+            
+            // Test header existence
+            HTTPAssertHeaderExists(request, name: "Accept")
+            HTTPAssertHeaderExists(request, name: "User-Agent")
+            HTTPAssertHeaderExists(request, name: "Authorization")
+            
+            // Test headers that should not exist
+            HTTPAssertHeaderNotExists(request, name: "Cookie")
+            HTTPAssertHeaderNotExists(request, name: "X-API-Key")
+            
+            // Test header case-insensitivity
+            HTTPAssertHeader(request, name: "accept", value: "application/json")
+            HTTPAssertHeader(request, name: "USER-AGENT", value: "HTTPAssertion-Demo/1.0")
+            
+            // Test negative header assertions
+            HTTPAssertHeaderNotEqual(request, name: "Accept", value: "text/html")
+            HTTPAssertHeaderNotEqual(request, name: "User-Agent", value: "Mozilla/5.0")
+        }
+        
+        // 2. Test HTTPBin API with query parameters and headers
+        try await HTTPPerformActionAndAssertRequested(
+            url: "https://httpbin.org/get",
+            method: "GET"
+        ) {
+            let httpbinButton = app.buttons["Call HTTPBin API"]
+            httpbinButton.tap()
+        } onRequested: { request in
+            // Test query parameter assertions
+            HTTPAssertQueryParameter(request, name: "source", value: "demo")
+            HTTPAssertQueryParameter(request, name: "version", value: "1.0")
+            HTTPAssertQueryParameter(request, name: "test_param", value: "hello world") // URL decoded
+            
+            // Test query parameter existence
+            HTTPAssertQueryParameterExists(request, name: "source")
+            HTTPAssertQueryParameterExists(request, name: "version")
+            HTTPAssertQueryParameterExists(request, name: "test_param")
+            
+            // Test query parameters that should not exist
+            HTTPAssertQueryParameterNotExists(request, name: "api_key")
+            HTTPAssertQueryParameterNotExists(request, name: "token")
+            
+            // Test negative query parameter assertions
+            HTTPAssertQueryParameterNotEqual(request, name: "source", value: "production")
+            HTTPAssertQueryParameterNotEqual(request, name: "version", value: "2.0")
+            
+            // Test all query parameters at once
+            HTTPAssertQueryParameters(request, [
+                "source": "demo",
+                "version": "1.0",
+                "test_param": "hello world"
+            ])
+            
+            // Test header assertions for HTTPBin
+            HTTPAssertHeader(request, name: "Accept", value: "application/json")
+            HTTPAssertHeader(request, name: "User-Agent", value: "HTTPAssertion-Demo/1.0")
+            HTTPAssertHeader(request, name: "X-Session-ID", value: "demo-session-123")
+            
+            // Test multiple headers at once
+            HTTPAssertHeaders(request, [
+                "Accept": "application/json",
+                "User-Agent": "HTTPAssertion-Demo/1.0",
+                "X-Session-ID": "demo-session-123"
+            ])
+        }
+        
+        // 3. Test JSONPlaceholder API with multiple query parameters
+        try await HTTPPerformActionAndAssertRequested(
+            urlPattern: ".*jsonplaceholder\\.typicode\\.com/posts.*",
+            method: "GET"
+        ) {
+            let jsonButton = app.buttons["Call JSONPlaceholder API"]
+            jsonButton.tap()
+        } onRequested: { request in
+            // Test query parameter assertions
+            HTTPAssertQueryParameter(request, name: "userId", value: "1")
+            HTTPAssertQueryParameter(request, name: "page", value: "1")
+            
+            // Test query parameter convenience methods
+            XCTAssertEqual(request.queryParameter(name: "userId"), "1")
+            XCTAssertEqual(request.queryParameter(name: "page"), "1")
+            XCTAssertNil(request.queryParameter(name: "nonexistent"))
+            
+            // Test all query parameters
+            let allParams = request.allQueryParameters()
+            XCTAssertEqual(allParams["userId"], "1")
+            XCTAssertEqual(allParams["page"], "1")
+            XCTAssertEqual(allParams.count, 2)
+            
+            // Test has query parameter
+            XCTAssertTrue(request.hasQueryParameter(name: "userId"))
+            XCTAssertTrue(request.hasQueryParameter(name: "page"))
+            XCTAssertFalse(request.hasQueryParameter(name: "limit"))
+            
+            // Test header assertions
+            HTTPAssertHeader(request, name: "Accept", value: "application/json")
+            HTTPAssertHeader(request, name: "User-Agent", value: "HTTPAssertion-Demo/1.0")
+            HTTPAssertHeader(request, name: "Accept-Language", value: "en-US")
+        }
+        
+        // 4. Test Google search with query parameters (URL encoded)
+        try await HTTPPerformActionAndAssertRequested(
+            urlPattern: ".*google\\.com/search.*",
+            method: "GET"
+        ) {
+            let searchField = app.textFields["Enter search query"]
+            searchField.tap()
+            searchField.typeText("Swift HTTP Testing")
+            
+            let searchButton = app.buttons["Search on Google"]
+            searchButton.tap()
+        } onRequested: { request in
+            // Test Google search query parameter
+            HTTPAssertQueryParameter(request, name: "q", value: "Swift HTTP Testing")
+            HTTPAssertQueryParameterExists(request, name: "q")
+            
+            // Test that the search query is properly URL decoded
+            XCTAssertEqual(request.queryParameter(name: "q"), "Swift HTTP Testing")
+            
+            // Ensure no unwanted parameters
+            HTTPAssertQueryParameterNotExists(request, name: "api_key")
+            HTTPAssertQueryParameterNotExists(request, name: "session_id")
+        }
+    }
+    
+    @MainActor
+    func testComplexHeaderAndQueryScenarios() async throws {
+        // Test more complex scenarios with mixed headers and query parameters
+        
+        // Test scenario: Multiple API calls with different patterns
+        let searchField = app.textFields["Enter search query"]
+        searchField.tap()
+        searchField.typeText("iOS Development")
+        
+        let searchButton = app.buttons["Search on Google"]
+        searchButton.tap()
+        
+        // Wait for Google request and test it
+        let googleRequest = await waitForRequest(
+            urlPattern: ".*google\\.com/search.*",
+            method: "GET",
+            timeout: 5.0
+        )
+        
+        XCTAssertNotNil(googleRequest)
+        if let request = googleRequest {
+            // Test that Google search has the expected query parameter
+            HTTPAssertQueryParameter(request, name: "q", value: "iOS Development")
+            
+            // Test using convenience method
+            XCTAssertEqual(request.queryParameter(name: "q"), "iOS Development")
+        }
+        
+        // Now test HTTPBin API
+        let httpbinButton = app.buttons["Call HTTPBin API"]
+        httpbinButton.tap()
+        
+        let httpbinRequest = await waitForRequest(
+            url: "https://httpbin.org/get",
+            method: "GET",
+            timeout: 5.0
+        )
+        
+        XCTAssertNotNil(httpbinRequest)
+        if let request = httpbinRequest {
+            // Test that all expected query parameters are present
+            HTTPAssertQueryParameters(request, [
+                "source": "demo",
+                "version": "1.0",
+                "test_param": "hello world"
+            ])
+            
+            // Test that all expected headers are present
+            HTTPAssertHeaders(request, [
+                "Accept": "application/json",
+                "User-Agent": "HTTPAssertion-Demo/1.0",
+                "X-Session-ID": "demo-session-123"
+            ])
+            
+            // Test convenience methods
+            let queryParams = request.allQueryParameters()
+            XCTAssertEqual(queryParams.count, 3)
+            XCTAssertTrue(request.hasQueryParameter(name: "source"))
+            XCTAssertTrue(request.hasQueryParameter(name: "version"))
+            XCTAssertTrue(request.hasQueryParameter(name: "test_param"))
+        }
+        
+        // Verify that we can distinguish between different requests
+        let allRequests = await HTTPRequests()
+        let googleRequests = allRequests.filter { request in
+            request.request.url?.host?.contains("google.com") == true
+        }
+        let httpbinRequests = allRequests.filter { request in
+            request.request.url?.host?.contains("httpbin.org") == true
+        }
+        
+        XCTAssertGreaterThan(googleRequests.count, 0, "Should have Google requests")
+        XCTAssertGreaterThan(httpbinRequests.count, 0, "Should have HTTPBin requests")
+        
+        // Test that Google requests don't have HTTPBin-specific parameters
+        for request in googleRequests {
+            HTTPAssertQueryParameterNotExists(request, name: "source")
+            HTTPAssertQueryParameterNotExists(request, name: "version")
+        }
+        
+        // Test that HTTPBin requests don't have Google-specific parameters  
+        for request in httpbinRequests {
+            HTTPAssertQueryParameterNotExists(request, name: "q")
+        }
+    }
 }
 
 extension XCUIElement {

@@ -81,7 +81,12 @@ struct ContentView: View {
     private func performGitHubAPICall() {
         guard let url = URL(string: "https://api.github.com/zen") else { return }
         
-        let task = URLSession.shared.dataTask(with: url) { _, _, _ in
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("HTTPAssertion-Demo/1.0", forHTTPHeaderField: "User-Agent")
+        request.setValue("Bearer demo-token", forHTTPHeaderField: "Authorization")
+        
+        let task = URLSession.shared.dataTask(with: request) { _, _, _ in
             DispatchQueue.main.async {
                 self.lastRequestInfo = "GitHub API call"
             }
@@ -90,9 +95,14 @@ struct ContentView: View {
     }
     
     private func performHttpBinAPICall() {
-        guard let url = URL(string: "https://httpbin.org/uuid") else { return }
+        guard let url = URL(string: "https://httpbin.org/get?source=demo&version=1.0&test_param=hello%20world") else { return }
         
-        let task = URLSession.shared.dataTask(with: url) { _, _, _ in
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("HTTPAssertion-Demo/1.0", forHTTPHeaderField: "User-Agent")
+        request.setValue("demo-session-123", forHTTPHeaderField: "X-Session-ID")
+        
+        let task = URLSession.shared.dataTask(with: request) { _, _, _ in
             DispatchQueue.main.async {
                 self.lastRequestInfo = "HTTPBin API call"
             }
@@ -101,9 +111,14 @@ struct ContentView: View {
     }
     
     private func performJSONPlaceholderAPICall() {
-        guard let url = URL(string: "https://jsonplaceholder.typicode.com/posts/1") else { return }
+        guard let url = URL(string: "https://jsonplaceholder.typicode.com/posts?userId=1&page=1") else { return }
         
-        let task = URLSession.shared.dataTask(with: url) { _, _, _ in
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("HTTPAssertion-Demo/1.0", forHTTPHeaderField: "User-Agent")
+        request.setValue("en-US", forHTTPHeaderField: "Accept-Language")
+        
+        let task = URLSession.shared.dataTask(with: request) { _, _, _ in
             DispatchQueue.main.async {
                 self.lastRequestInfo = "JSONPlaceholder API call"
             }
