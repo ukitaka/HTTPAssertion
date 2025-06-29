@@ -97,13 +97,40 @@ final class DemoUITests: XCTestCase {
     
     @MainActor
     @available(macOS 13.3, iOS 16.4, *)
-    func testContextUpdateMechanism() async throws {
-        // Test the new context update mechanism using waitForContextUpdate
+    func testContextUpdate() async throws {
+        // Test the context update mechanism and verify that lastUpdated changes
         
-        // Wait for app_state context from periodic updates (only test this since we removed ContentView context updates)
+        // Wait for initial user_context from periodic updates
+        let initialUserContext: UserContext = try await waitForContextUpdate(
+            forKey: "user_context",
+        )
+        
+        XCTAssertEqual(initialUserContext.username, "TestUser")
+        XCTAssertEqual(initialUserContext.currentScreen, "ContentView")
+        XCTAssertEqual(initialUserContext.isLoggedIn, true)
+        
+        let initialTimestamp = initialUserContext.lastUpdated
+        print("Initial lastUpdated: \(initialTimestamp)")
+        
+        // Wait for the next periodic update using since parameter (no sleep needed)
+        let updatedUserContext: UserContext = try await waitForContextUpdate(
+            forKey: "user_context",
+        )
+        
+        let updatedTimestamp = updatedUserContext.lastUpdated
+        print("Updated lastUpdated: \(updatedTimestamp)")
+        
+        // Verify that the timestamp has been updated
+        XCTAssertGreaterThan(updatedTimestamp, initialTimestamp, "lastUpdated should be more recent after periodic update")
+        
+        // Verify other fields remain the same
+        XCTAssertEqual(updatedUserContext.username, "TestUser")
+        XCTAssertEqual(updatedUserContext.currentScreen, "ContentView")
+        XCTAssertEqual(updatedUserContext.isLoggedIn, true)
+        
+        // Also test app_state context
         let appState: AppState = try await waitForContextUpdate(
             forKey: "app_state",
-            timeout: 15.0
         )
         
         XCTAssertEqual(appState.version, "1.0.0")
@@ -112,6 +139,7 @@ final class DemoUITests: XCTestCase {
         // Verify available context keys
         let allKeys = await Context.listKeys()
         print("All available context keys after update: \(allKeys)")
+        XCTAssertTrue(allKeys.contains("user_context"), "Should have user_context key")
         XCTAssertTrue(allKeys.contains("app_state"), "Should have app_state key")
     }
     

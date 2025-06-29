@@ -173,6 +173,7 @@ public extension XCTestCase {
     /// Waits for a context value to be updated or become available
     func waitForContextUpdate<T: Codable & Sendable>(
         forKey key: String,
+        since: Date = Date.now,
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
@@ -184,16 +185,6 @@ public extension XCTestCase {
         }
         
         let filePath = fileURL.path
-        
-        // Get initial file modification time (or nil if file doesn't exist)
-        let initialModificationTime: Date? = {
-            if FileManager.default.fileExists(atPath: filePath),
-               let attributes = try? FileManager.default.attributesOfItem(atPath: filePath),
-               let modificationDate = attributes[.modificationDate] as? Date {
-                return modificationDate
-            }
-            return nil
-        }()
         
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ -> Bool in
@@ -207,13 +198,8 @@ public extension XCTestCase {
                        let attributes = try? fm.attributesOfItem(atPath: filePath),
                        let currentModificationDate = attributes[.modificationDate] as? Date {
                         
-                        if let initialModTime = initialModificationTime {
-                            // File existed before, check if it was modified
-                            fileWasUpdated = currentModificationDate > initialModTime
-                        } else {
-                            // File was created during waiting
-                            fileWasUpdated = true
-                        }
+                        // Check if file was modified after the since date
+                        fileWasUpdated = currentModificationDate > since
                     }
                     semaphore.signal()
                 }

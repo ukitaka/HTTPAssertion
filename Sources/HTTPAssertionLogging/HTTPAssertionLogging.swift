@@ -14,12 +14,12 @@ public final class HTTPAssertionLogging {
     }
     
     /// Starts HTTP request interception and logging with context updates
-    public static func start(contextUpdateInterval: TimeInterval = 1.0, contextUpdater: @escaping @Sendable () async -> Void) {
+    public static func start(contextUpdateInterval: TimeInterval = 1.0, contextUpdater: @escaping @Sendable () async throws -> Void) {
         startInternal(contextUpdateInterval: contextUpdateInterval, contextUpdater: contextUpdater)
     }
     
     /// Internal implementation for starting HTTP assertion logging
-    private static func startInternal(contextUpdateInterval: TimeInterval?, contextUpdater: (@Sendable () async -> Void)?) {
+    private static func startInternal(contextUpdateInterval: TimeInterval?, contextUpdater: (@Sendable () async throws -> Void)?) {
         lock.lock()
         defer { lock.unlock() }
         
@@ -42,7 +42,11 @@ public final class HTTPAssertionLogging {
         if let interval = contextUpdateInterval, let updater = contextUpdater {
             contextUpdateTask = Task.detached {
                 while !Task.isCancelled {
-                    await updater()
+                    do {
+                        try await updater()
+                    } catch {
+                        print("Context updater error: \(error)")
+                    }
                     try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
                 }
             }
