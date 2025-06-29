@@ -451,4 +451,124 @@ public func HTTPAssertQueryParameterNotEqual(
     }
 }
 
+// MARK: - Header Assertions
+
+/// Asserts that a request contains a specific header with the expected value
+/// Header names are case-insensitive
+public func HTTPAssertHeader(
+    _ request: HTTPRequests.HTTPRequest,
+    name: String,
+    value: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard let headers = request.request.allHTTPHeaderFields else {
+        XCTFail("Request does not contain any headers", file: file, line: line)
+        return
+    }
+    
+    // Find header with case-insensitive name matching
+    let matchingHeader = headers.first { key, _ in
+        key.lowercased() == name.lowercased()
+    }
+    
+    guard let (actualName, actualValue) = matchingHeader else {
+        let availableHeaders = headers.keys.joined(separator: ", ")
+        XCTFail("Header '\(name)' not found. Available headers: \(availableHeaders)", file: file, line: line)
+        return
+    }
+    
+    if actualValue != value {
+        XCTFail("Header '\(actualName)' found but value mismatch. Expected: '\(value)', Actual: '\(actualValue)'", file: file, line: line)
+    }
+}
+
+/// Asserts that a request contains a specific header (regardless of value)
+/// Header names are case-insensitive
+public func HTTPAssertHeaderExists(
+    _ request: HTTPRequests.HTTPRequest,
+    name: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard let headers = request.request.allHTTPHeaderFields else {
+        XCTFail("Request does not contain any headers", file: file, line: line)
+        return
+    }
+    
+    let exists = headers.keys.contains { key in
+        key.lowercased() == name.lowercased()
+    }
+    
+    if !exists {
+        let availableHeaders = headers.keys.joined(separator: ", ")
+        XCTFail("Header '\(name)' not found. Available headers: \(availableHeaders)", file: file, line: line)
+    }
+}
+
+/// Asserts that a request does not contain a specific header
+/// Header names are case-insensitive
+public func HTTPAssertHeaderNotExists(
+    _ request: HTTPRequests.HTTPRequest,
+    name: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard let headers = request.request.allHTTPHeaderFields else {
+        // If there are no headers at all, the assertion passes
+        return
+    }
+    
+    let exists = headers.keys.contains { key in
+        key.lowercased() == name.lowercased()
+    }
+    
+    if exists {
+        XCTFail("Header '\(name)' should not exist but was found", file: file, line: line)
+    }
+}
+
+/// Asserts that a request contains all specified headers with their expected values
+/// Header names are case-insensitive
+public func HTTPAssertHeaders(
+    _ request: HTTPRequests.HTTPRequest,
+    _ expectedHeaders: [String: String],
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    for (name, expectedValue) in expectedHeaders {
+        HTTPAssertHeader(request, name: name, value: expectedValue, file: file, line: line)
+    }
+}
+
+/// Asserts that a request does NOT contain a specific header with the given value
+/// This is useful for testing negative cases where you want to ensure a header doesn't have a specific value
+/// Header names are case-insensitive
+public func HTTPAssertHeaderNotEqual(
+    _ request: HTTPRequests.HTTPRequest,
+    name: String,
+    value: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard let headers = request.request.allHTTPHeaderFields else {
+        // If there are no headers at all, the assertion passes
+        return
+    }
+    
+    // Find header with case-insensitive name matching
+    let matchingHeader = headers.first { key, _ in
+        key.lowercased() == name.lowercased()
+    }
+    
+    // If header doesn't exist, assertion passes
+    guard let (actualName, actualValue) = matchingHeader else {
+        return
+    }
+    
+    if actualValue == value {
+        XCTFail("Header '\(actualName)' should not have value '\(value)' but it does", file: file, line: line)
+    }
+}
+
 
