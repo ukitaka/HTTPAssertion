@@ -66,7 +66,16 @@ jobs:
     
     - name: Wait for simulator to boot
       run: |
-        timeout 60 bash -c 'until xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -q "Booted"; do sleep 1; done'
+        MAX_WAIT=60
+        COUNTER=0
+        while ! xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -q "Booted"; do
+          if [ $COUNTER -ge $MAX_WAIT ]; then
+            echo "Timeout waiting for simulator to boot"
+            exit 1
+          fi
+          sleep 1
+          COUNTER=$((COUNTER + 1))
+        done
         echo "Simulator booted successfully"
     
     - name: Build Demo App for Testing

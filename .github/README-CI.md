@@ -82,6 +82,7 @@ The CI workflows generate several artifacts:
 1. **Simulator Boot Timeout**
    - The CI automatically retries simulator operations
    - Timeout set to 120 seconds for boot process
+   - Uses shell-based timeout instead of `timeout` command for macOS compatibility
 
 2. **Network Access in Tests**
    - UI tests make real HTTP requests to public APIs
