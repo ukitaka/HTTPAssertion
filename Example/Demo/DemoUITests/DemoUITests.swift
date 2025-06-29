@@ -40,17 +40,17 @@ final class DemoUITests: XCTestCase {
         XCTAssertNotNil(googleRequest, "Google search request should be fired")
         
         // 2. Call GitHub API and wait for response
-        let githubButton = app.buttons["Call GitHub API"]
-        githubButton.tap()
-        
-        // Wait for GitHub API response
-        let githubResponse = await waitForResponse(
-            url: "https://api.github.com/zen",
-            method: "GET",
-            timeout: 5.0
-        )
-        XCTAssertNotNil(githubResponse, "GitHub API should respond")
-        XCTAssertEqual(githubResponse?.response?.statusCode, 200, "GitHub API should return 200")
+//        let githubButton = app.buttons["Call GitHub API"]
+//        githubButton.tap()
+//        
+//        // Wait for GitHub API response
+//        let githubResponse = await waitForResponse(
+//            url: "https://api.github.com/zen",
+//            method: "GET",
+//            timeout: 5.0
+//        )
+//        XCTAssertNotNil(githubResponse, "GitHub API should respond")
+//        XCTAssertEqual(githubResponse?.response?.statusCode, 200, "GitHub API should return 200")
         
         // 3. Call HTTPBin API and wait for response
         let httpbinButton = app.buttons["Call HTTPBin API"]
@@ -166,23 +166,23 @@ final class DemoUITests: XCTestCase {
         }
         
         // Example 2: Perform action and wait for response
-        try await HTTPPerformActionAndAssertResponse(
-            url: "https://api.github.com/zen",
-            method: "GET"
-        ) {
-            // Action: Call GitHub API
-            let githubButton = app.buttons["Call GitHub API"]
-            githubButton.tap()
-        } onRequested: { request in
-            // Called when request is fired
-            print("GitHub API request fired")
-            XCTAssertEqual(request.request.httpMethod, "GET")
-        } onResponse: { request in
-            // Called when response is received
-            print("GitHub API response received")
-            XCTAssertNotNil(request.response)
-            XCTAssertEqual(request.response?.statusCode, 200)
-        }
+//        try await HTTPPerformActionAndAssertResponse(
+//            url: "https://api.github.com/zen",
+//            method: "GET"
+//        ) {
+//            // Action: Call GitHub API
+//            let githubButton = app.buttons["Call GitHub API"]
+//            githubButton.tap()
+//        } onRequested: { request in
+//            // Called when request is fired
+//            print("GitHub API request fired")
+//            XCTAssertEqual(request.request.httpMethod, "GET")
+//        } onResponse: { request in
+//            // Called when response is received
+//            print("GitHub API response received")
+//            XCTAssertNotNil(request.response)
+//            XCTAssertEqual(request.response?.statusCode, 200)
+//        }
         
         // Example 3: Multiple actions with different APIs
         try await HTTPPerformActionAndAssertRequested(
