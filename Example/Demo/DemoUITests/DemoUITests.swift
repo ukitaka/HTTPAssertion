@@ -58,7 +58,7 @@ final class DemoUITests: XCTestCase {
         
         // Wait for HTTPBin API response
         let httpbinResponse = await waitForResponse(
-            url: "https://httpbin.org/uuid",
+            urlPattern: "https://httpbin.org/get*",
             method: "GET",
             timeout: 5.0
         )
@@ -71,7 +71,7 @@ final class DemoUITests: XCTestCase {
         
         // Wait for JSONPlaceholder API response
         let jsonResponse = await waitForResponse(
-            url: "https://jsonplaceholder.typicode.com/posts/1",
+            urlPattern: "https://jsonplaceholder.typicode.com/posts*",
             method: "GET",
             timeout: 5.0
         )
@@ -186,14 +186,14 @@ final class DemoUITests: XCTestCase {
         
         // Example 3: Multiple actions with different APIs
         try await HTTPPerformActionAndAssertRequested(
-            url: "https://httpbin.org/uuid",
+            urlPattern: "https://httpbin.org/get*",
             method: "GET"
         ) {
             let httpbinButton = app.buttons["Call HTTPBin API"]
             httpbinButton.tap()
         } onRequested: { request in
             print("HTTPBin request completed")
-            XCTAssertEqual(request.request.url?.absoluteString, "https://httpbin.org/uuid")
+            XCTAssertEqual(request.request.url?.absoluteString, "https://httpbin.org/get?source=demo&version=1.0&test_param=hello%20world")
         }
     }
     
@@ -232,7 +232,7 @@ final class DemoUITests: XCTestCase {
         
         // 2. Test HTTPBin API with query parameters and headers
         try await HTTPPerformActionAndAssertRequested(
-            url: "https://httpbin.org/get",
+            urlPattern: "https://httpbin.org/get*",
             method: "GET"
         ) {
             let httpbinButton = app.buttons["Call HTTPBin API"]
@@ -368,7 +368,7 @@ final class DemoUITests: XCTestCase {
         httpbinButton.tap()
         
         let httpbinRequest = await waitForRequest(
-            url: "https://httpbin.org/get",
+            urlPattern: "https://httpbin.org/get*",
             method: "GET",
             timeout: 5.0
         )
