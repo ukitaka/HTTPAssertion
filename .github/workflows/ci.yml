@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: macos-15
+    strategy:
+      matrix:
+        include:
+          - name: "Swift Package Tests"
+            test_command: "swift test --verbose"
+            working_directory: "."
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          .build
+          ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-dependencies-${{ hashFiles('Package.swift') }}
+        restore-keys: |
+          ${{ runner.os }}-dependencies-
+    
+    - name: Show Xcode version
+      run: xcodebuild -version
+    
+    - name: Show Swift version
+      run: swift --version
+    
+    - name: ${{ matrix.name }}
+      working-directory: ${{ matrix.working_directory }}
+      run: ${{ matrix.test_command }}
+      timeout-minutes: 10
+
+  build-demo:
+    name: Build Demo App
+    runs-on: macos-15
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Cache Xcode dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          Example/Demo/.build
+          ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-demo-${{ hashFiles('Example/Demo/Demo.xcodeproj/project.pbxproj') }}
+        restore-keys: |
+          ${{ runner.os }}-demo-
+    
+    - name: Build Demo for iOS Simulator
+      run: |
+        cd Example/Demo
+        set -o pipefail
+        xcodebuild build \
+          -scheme Demo \
+          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -derivedDataPath DerivedData \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          | xcpretty
+      timeout-minutes: 15

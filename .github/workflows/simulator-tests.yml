@@ -1,0 +1,195 @@
+name: Simulator Tests
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+
+jobs:
+  ui-tests:
+    name: UI Tests on Simulator
+    runs-on: macos-15
+    timeout-minutes: 45
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Setup Xcode environment
+      run: |
+        echo "Xcode version:"
+        xcodebuild -version
+        echo "Available schemes:"
+        cd Example/Demo
+        xcodebuild -list
+    
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          Example/Demo/DerivedData
+          ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-uitest-${{ hashFiles('Example/Demo/Demo.xcodeproj/project.pbxproj') }}
+        restore-keys: |
+          ${{ runner.os }}-uitest-
+    
+    - name: Prepare iOS Simulator
+      run: |
+        # List available simulators
+        echo "Available simulators:"
+        xcrun simctl list devices available | grep iPhone
+        
+        # Create a specific simulator if needed
+        SIMULATOR_NAME="iPhone-16-HTTPAssertion-Test"
+        DEVICE_TYPE="iPhone 16"
+        RUNTIME="iOS-18-2"
+        
+        # Check if our test simulator already exists
+        if ! xcrun simctl list devices | grep -q "$SIMULATOR_NAME"; then
+          echo "Creating test simulator..."
+          xcrun simctl create "$SIMULATOR_NAME" "$DEVICE_TYPE" "$RUNTIME"
+        fi
+        
+        # Get the UUID of our test simulator
+        SIMULATOR_ID=$(xcrun simctl list devices | grep "$SIMULATOR_NAME" | grep -o '[A-Z0-9-]\{36\}' | head -1)
+        echo "Using simulator: $SIMULATOR_ID"
+        echo "SIMULATOR_ID=$SIMULATOR_ID" >> $GITHUB_ENV
+        echo "SIMULATOR_NAME=$SIMULATOR_NAME" >> $GITHUB_ENV
+        
+        # Boot the simulator
+        echo "Booting simulator..."
+        xcrun simctl boot "$SIMULATOR_ID"
+        
+        # Wait for it to fully boot
+        echo "Waiting for simulator to boot..."
+        timeout 120 bash -c "while ! xcrun simctl list devices | grep '$SIMULATOR_ID' | grep -q 'Booted'; do sleep 2; done"
+        
+        echo "Simulator is ready!"
+    
+    - name: Build Demo App for Testing
+      run: |
+        cd Example/Demo
+        echo "Building Demo app for testing..."
+        
+        xcodebuild build-for-testing \
+          -scheme Demo \
+          -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+          -derivedDataPath DerivedData \
+          -quiet \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+        
+        echo "Build completed successfully"
+      timeout-minutes: 20
+    
+    - name: Run UI Tests
+      id: run_tests
+      run: |
+        cd Example/Demo
+        echo "Starting UI Tests..."
+        
+        # Run the tests with detailed output
+        xcodebuild test-without-building \
+          -scheme Demo \
+          -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+          -derivedDataPath DerivedData \
+          -only-testing:DemoUITests \
+          -resultBundlePath TestResults.xcresult \
+          -parallel-testing-enabled NO \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          2>&1 | tee test_output.log
+        
+        # Capture exit code
+        TEST_EXIT_CODE=${PIPESTATUS[0]}
+        echo "test_exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
+        
+        if [ $TEST_EXIT_CODE -eq 0 ]; then
+          echo "✅ All UI tests passed!"
+        else
+          echo "❌ Some UI tests failed (exit code: $TEST_EXIT_CODE)"
+        fi
+      timeout-minutes: 25
+      continue-on-error: true
+    
+    - name: Parse Test Results
+      if: always()
+      run: |
+        cd Example/Demo
+        
+        if [ -d "TestResults.xcresult" ]; then
+          echo "Extracting test results..."
+          
+          # Extract test summary
+          xcrun xcresulttool get --format json --path TestResults.xcresult > test_summary.json
+          
+          # Extract key metrics
+          echo "Test Summary:"
+          echo "============="
+          
+          # Count tests
+          TOTAL_TESTS=$(jq -r '.actions[0].actionResult.testsRef.id.value' test_summary.json 2>/dev/null || echo "unknown")
+          echo "Test bundle: $TOTAL_TESTS"
+          
+          # Show any failures
+          if [ -f "test_output.log" ]; then
+            echo ""
+            echo "Test Output Summary:"
+            echo "==================="
+            grep -E "(PASS|FAIL|Test Suite|Test Case)" test_output.log | tail -20
+          fi
+        else
+          echo "⚠️ No test results found"
+        fi
+    
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ui-test-results-${{ github.run_number }}
+        path: |
+          Example/Demo/TestResults.xcresult
+          Example/Demo/test_output.log
+          Example/Demo/test_summary.json
+        retention-days: 14
+    
+    - name: Upload Screenshots (if any)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ui-test-screenshots-${{ github.run_number }}
+        path: |
+          Example/Demo/DerivedData/Logs/Test/*.xcresult
+          ~/Library/Developer/Xcode/DerivedData/**/Logs/Test/*.xcresult
+        retention-days: 7
+      continue-on-error: true
+    
+    - name: Cleanup Simulator
+      if: always()
+      run: |
+        if [ ! -z "$SIMULATOR_ID" ]; then
+          echo "Shutting down simulator..."
+          xcrun simctl shutdown "$SIMULATOR_ID" || true
+          
+          # Optionally delete the test simulator
+          # xcrun simctl delete "$SIMULATOR_ID" || true
+        fi
+    
+    - name: Test Status Summary
+      if: always()
+      run: |
+        if [ "${{ steps.run_tests.outputs.test_exit_code }}" = "0" ]; then
+          echo "🎉 UI Tests completed successfully!"
+          exit 0
+        else
+          echo "💥 UI Tests failed with exit code: ${{ steps.run_tests.outputs.test_exit_code }}"
+          echo ""
+          echo "Check the uploaded artifacts for detailed results:"
+          echo "- TestResults.xcresult: Detailed test results"
+          echo "- test_output.log: Full test output"
+          echo "- test_summary.json: JSON summary"
+          exit 1
+        fi
