@@ -84,7 +84,6 @@ struct ContentView: View {
         var request = URLRequest(url: url)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("HTTPAssertion-Demo/1.0", forHTTPHeaderField: "User-Agent")
-        request.setValue("Bearer demo-token", forHTTPHeaderField: "Authorization")
         
         let task = URLSession.shared.dataTask(with: request) { _, _, _ in
             DispatchQueue.main.async {

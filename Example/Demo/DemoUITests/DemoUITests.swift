@@ -212,12 +212,10 @@ final class DemoUITests: XCTestCase {
             // Test header assertions
             HTTPAssertHeader(request, name: "Accept", value: "application/json")
             HTTPAssertHeader(request, name: "User-Agent", value: "HTTPAssertion-Demo/1.0")
-            HTTPAssertHeader(request, name: "Authorization", value: "Bearer demo-token")
             
             // Test header existence
             HTTPAssertHeaderExists(request, name: "Accept")
             HTTPAssertHeaderExists(request, name: "User-Agent")
-            HTTPAssertHeaderExists(request, name: "Authorization")
             
             // Test headers that should not exist
             HTTPAssertHeaderNotExists(request, name: "Cookie")
