@@ -163,3 +163,131 @@ public func HTTPAssertRequestedOnce(
         line: line
     )
 }
+
+// MARK: - Context Assertions
+
+/// Asserts that a context value exists and optionally matches an expected value
+@available(macOS 13.3, iOS 16.4, *)
+public func HTTPAssertContext<T: Codable & Sendable & Equatable>(
+    _ type: T.Type,
+    forKey key: String,
+    expectedValue: T? = nil,
+    app: XCUIApplication,
+    timeout: TimeInterval = 10.0,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) async {
+    do {
+        let value = try await Context.waitForContext(
+            type,
+            forKey: key,
+            expectedValue: expectedValue,
+            app: app,
+            timeout: timeout
+        )
+        
+        if let expectedValue = expectedValue {
+            XCTAssertEqual(
+                value,
+                expectedValue,
+                "Context value for key '\(key)' does not match expected value",
+                file: file,
+                line: line
+            )
+        } else {
+            XCTAssertNotNil(
+                value,
+                "Context value for key '\(key)' should exist",
+                file: file,
+                line: line
+            )
+        }
+    } catch {
+        XCTFail(
+            "Failed to retrieve context for key '\(key)': \(error)",
+            file: file,
+            line: line
+        )
+    }
+}
+
+/// Asserts that a context exists for the given key
+@available(macOS 13.3, iOS 16.4, *)
+public func HTTPAssertContextExists<T: Codable & Sendable>(
+    _ type: T.Type,
+    forKey key: String,
+    app: XCUIApplication,
+    timeout: TimeInterval = 10.0,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) async {
+    let startTime = Date()
+    
+    while Date().timeIntervalSince(startTime) < timeout {
+        do {
+            // Request context update
+            try await Context.requestUpdate(app: app)
+            
+            // Try to get the context
+            if let _ = try await Context.retrieve(type, forKey: key) {
+                // Context exists, assertion passes
+                return
+            }
+            
+            // Wait before retrying
+            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        } catch {
+            // Continue trying until timeout
+        }
+    }
+    
+    // If we get here, context was not found within timeout
+    XCTFail(
+        "Context should exist for key '\(key)' within \(timeout) seconds",
+        file: file,
+        line: line
+    )
+}
+
+/// Asserts that a dictionary context value exists and optionally matches an expected value
+@available(macOS 13.3, iOS 16.4, *)
+public func HTTPAssertContext(
+    forKey key: String,
+    expectedValue: [String: String]? = nil,
+    app: XCUIApplication,
+    timeout: TimeInterval = 10.0,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) async {
+    do {
+        let value = try await Context.waitForContext(
+            forKey: key,
+            expectedValue: expectedValue,
+            app: app,
+            timeout: timeout
+        )
+        
+        if let expectedValue = expectedValue {
+            XCTAssertEqual(
+                value,
+                expectedValue,
+                "Context value for key '\(key)' does not match expected value",
+                file: file,
+                line: line
+            )
+        } else {
+            XCTAssertNotNil(
+                value,
+                "Context value for key '\(key)' should exist",
+                file: file,
+                line: line
+            )
+        }
+    } catch {
+        XCTFail(
+            "Failed to retrieve context for key '\(key)': \(error)",
+            file: file,
+            line: line
+        )
+    }
+}

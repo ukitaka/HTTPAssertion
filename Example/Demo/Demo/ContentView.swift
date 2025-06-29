@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import HTTPAssertionLogging
 
 struct ContentView: View {
@@ -128,28 +129,27 @@ struct ContentView: View {
     }
     
     private func storeUserContext() {
-        let deviceInfo = DeviceInfo(
-            deviceModel: "iPhone Simulator",
-            osVersion: UIDevice.current.systemVersion,
-            appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        )
-        
         let userContext = UserContext(
-            userID: "test-user-123",
-            username: "demouser",
-            deviceInfo: deviceInfo
+            currentScreen: "ContentView",
+            lastUpdated: Date(),
+            username: "TestUser",
+            isLoggedIn: true,
+            preferences: [
+                "theme": "light",
+                "language": "en"
+            ]
         )
         
         Task {
             do {
                 // Store as Codable object
-                try await Context.store(userContext, forKey: "currentUser")
+                try await Context.store(userContext, forKey: "user_context")
                 
                 // Also store device info as dictionary
                 let deviceDict: [String: String] = [
-                    "model": deviceInfo.deviceModel,
-                    "os": deviceInfo.osVersion,
-                    "app": deviceInfo.appVersion,
+                    "model": "iPhone Simulator",
+                    "os": UIDevice.current.systemVersion,
+                    "app": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0",
                     "timestamp": String(Date().timeIntervalSince1970)
                 ]
                 try await Context.store(deviceDict, forKey: "deviceInfo")

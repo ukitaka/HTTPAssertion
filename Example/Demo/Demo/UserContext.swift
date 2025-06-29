@@ -1,17 +1,19 @@
 import Foundation
 
 /// Example context data structure for demonstrating arbitrary data sharing
-public struct UserContext: Codable, Sendable {
-    public let userID: String
+public struct UserContext: Codable, Sendable, Equatable {
+    public let currentScreen: String
+    public let lastUpdated: Date
     public let username: String
-    public let deviceInfo: DeviceInfo
-    public let sessionStartTime: Date
+    public let isLoggedIn: Bool
+    public let preferences: [String: String]
     
-    public init(userID: String, username: String, deviceInfo: DeviceInfo, sessionStartTime: Date = Date()) {
-        self.userID = userID
+    public init(currentScreen: String, lastUpdated: Date, username: String, isLoggedIn: Bool, preferences: [String: String] = [:]) {
+        self.currentScreen = currentScreen
+        self.lastUpdated = lastUpdated
         self.username = username
-        self.deviceInfo = deviceInfo
-        self.sessionStartTime = sessionStartTime
+        self.isLoggedIn = isLoggedIn
+        self.preferences = preferences
     }
 }
 

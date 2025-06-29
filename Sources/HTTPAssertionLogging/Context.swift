@@ -59,6 +59,23 @@ public enum Context {
     public static func clear() async {
         await storage.clear()
     }
+    
+    /// Handles URL scheme requests for context updates
+    public static func handleURL(_ url: URL) async -> Bool {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              components.scheme == "httpassertion",
+              components.host == "context" else {
+            return false
+        }
+        
+        switch components.path {
+        case "/update":
+            // Just return true - the actual context update will be handled by the AppDelegate
+            return true
+        default:
+            return false
+        }
+    }
 }
 
 /// Errors that can occur during context storage operations
