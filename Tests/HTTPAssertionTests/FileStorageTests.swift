@@ -155,4 +155,42 @@ final class FileStorageTests: XCTestCase {
         XCTAssertEqual(limited.count, 3)
         XCTAssertEqual(limited.map { $0.id }, ["5", "4", "3"])
     }
+    
+    func testLoadSortedWithDateFilter() async throws {
+        struct TestData: Codable, Equatable {
+            let id: String
+            let value: String
+        }
+        
+        // Create first 2 files
+        for i in 1...2 {
+            try await storage.store(TestData(id: "\(i)", value: "value\(i)"), forKey: "\(i)")
+            try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        }
+        
+        // Get time after creating first 2 files
+        let midTime = Date()
+        try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        
+        // Create remaining files
+        for i in 3...5 {
+            try await storage.store(TestData(id: "\(i)", value: "value\(i)"), forKey: "\(i)")
+            try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        }
+        
+        // Load files created since midTime (should get files 3, 4, 5)
+        let filteredByCreation = await storage.loadSorted(TestData.self, sortBy: .creationDate, ascending: true, since: midTime)
+        XCTAssertEqual(filteredByCreation.count, 3)
+        XCTAssertEqual(filteredByCreation.map { $0.id }, ["3", "4", "5"])
+        
+        // Test with modification date filter
+        let futureTime = Date().addingTimeInterval(1.0)
+        let filteredByModification = await storage.loadSorted(TestData.self, sortBy: .modificationDate, ascending: true, since: futureTime)
+        XCTAssertEqual(filteredByModification.count, 0) // No files modified after future time
+        
+        // Test with limit + date filter
+        let limitedAndFiltered = await storage.loadSorted(TestData.self, limit: 2, sortBy: .creationDate, ascending: true, since: midTime)
+        XCTAssertEqual(limitedAndFiltered.count, 2)
+        XCTAssertEqual(limitedAndFiltered.map { $0.id }, ["3", "4"])
+    }
 }

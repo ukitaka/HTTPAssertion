@@ -150,12 +150,12 @@ actor FileStorage {
         return objects
     }
     
-    enum SortKey {
+    public enum SortKey {
         case creationDate
         case modificationDate
     }
     
-    func loadSorted<T: Codable>(_ type: T.Type, limit: Int? = nil, sortBy: SortKey = .modificationDate, ascending: Bool = true) -> [T] {
+    func loadSorted<T: Codable>(_ type: T.Type, limit: Int? = nil, sortBy: SortKey = .modificationDate, ascending: Bool = true, since: Date? = nil) -> [T] {
         guard let directory = storageDirectory else { return [] }
         
         do {
@@ -168,7 +168,23 @@ actor FileStorage {
             
             let jsonFiles = files.filter { $0.pathExtension == "json" }
             
-            let sortedFiles = jsonFiles.sorted(by: { file1, file2 in
+            // Filter by date if specified
+            let filteredFiles: [URL]
+            if let sinceDate = since {
+                filteredFiles = jsonFiles.filter { file in
+                    let date: Date?
+                    if sortBy == .creationDate {
+                        date = try? file.resourceValues(forKeys: [.creationDateKey]).creationDate
+                    } else {
+                        date = try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+                    }
+                    return date.map { $0 >= sinceDate } ?? false
+                }
+            } else {
+                filteredFiles = jsonFiles
+            }
+            
+            let sortedFiles = filteredFiles.sorted(by: { file1, file2 in
                 let date1: Date?
                 let date2: Date?
                 

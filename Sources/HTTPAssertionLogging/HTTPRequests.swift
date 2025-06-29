@@ -4,6 +4,12 @@ import Foundation
 public enum HTTPRequests {
     private static let storage = FileStorage(subdirectory: "Requests")
     
+    /// Sort key for retrieving requests
+    public enum SortBy {
+        case requestTime    // Sort by file creation date (when request was made)
+        case responseTime   // Sort by file modification date (when response was received)
+    }
+    
     /// Initializes the storage directory
     static func initialize() async {
         await storage.initialize()
@@ -38,14 +44,10 @@ public enum HTTPRequests {
         return loadedRequests.sorted { $0.timestamp < $1.timestamp }
     }
     
-    /// Gets stored requests sorted by modification time with optional limit
-    public static func recentRequests(limit: Int? = nil) async -> [HTTPRequest] {
-        return await storage.loadSorted(HTTPRequest.self, limit: limit, sortBy: .modificationDate, ascending: false)
-    }
-    
-    /// Gets stored requests sorted by creation time (request time) with optional limit
-    public static func requestsByCreationTime(limit: Int? = nil, ascending: Bool = true) async -> [HTTPRequest] {
-        return await storage.loadSorted(HTTPRequest.self, limit: limit, sortBy: .creationDate, ascending: ascending)
+    /// Gets stored requests with optional sorting, limit and date filtering
+    public static func recentRequests(limit: Int? = nil, sortBy: SortBy = .responseTime, ascending: Bool = false, since: Date? = nil) async -> [HTTPRequest] {
+        let storageSortKey: FileStorage.SortKey = sortBy == .requestTime ? .creationDate : .modificationDate
+        return await storage.loadSorted(HTTPRequest.self, limit: limit, sortBy: storageSortKey, ascending: ascending, since: since)
     }
 }
 
@@ -81,7 +83,7 @@ extension HTTPRequests {
             self.url = request.url
             self.httpMethod = request.httpMethod
             self.allHTTPHeaderFields = request.allHTTPHeaderFields
-            self.httpBody = request.httpBody ?? request.httpBodyStream?.readData()
+            self.httpBody = request.httpBody
             self.timeoutInterval = request.timeoutInterval
         }
     }
@@ -122,26 +124,3 @@ public struct CodableError: Codable, Sendable {
     }
 }
 
-// MARK: - Helper Extension
-private extension InputStream {
-    func readData() -> Data? {
-        open()
-        defer { close() }
-        
-        let bufferSize = 1024
-        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
-        defer { buffer.deallocate() }
-        
-        var data = Data()
-        while hasBytesAvailable {
-            let bytesRead = read(buffer, maxLength: bufferSize)
-            if bytesRead > 0 {
-                data.append(buffer, count: bytesRead)
-            } else {
-                break
-            }
-        }
-        
-        return data.isEmpty ? nil : data
-    }
-}
