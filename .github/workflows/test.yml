@@ -63,6 +63,9 @@ jobs:
         echo "Booting simulator: $SIMULATOR_ID"
         xcrun simctl boot $SIMULATOR_ID
         echo "SIMULATOR_ID=$SIMULATOR_ID" >> $GITHUB_ENV
+        
+        # Disable hardware keyboard to prevent typing issues in UI tests
+        defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool NO
     
     - name: Wait for simulator to boot
       run: |
@@ -124,7 +127,7 @@ jobs:
           exit 1
         fi
 
-  # ビルドのみのジョブ（UIテストが失敗する場合のフォールバック）
+  # Build-only job (fallback when UI tests fail)
   demo-build-only:
     name: Demo App Build Check
     runs-on: macos-15
@@ -152,7 +155,7 @@ jobs:
           CODE_SIGNING_REQUIRED=NO
       timeout-minutes: 15
 
-  # ヘルスチェック（依存関係のチェックなど）
+  # Health check (dependency validation, etc.)
   health-check:
     name: Health Check
     runs-on: macos-15
