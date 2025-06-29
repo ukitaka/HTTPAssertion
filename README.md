@@ -260,6 +260,43 @@ try await HTTPPerformActionAndAssertRequested(
 
 4. **Async Support**: Built with Swift concurrency features, providing thread-safe operations and efficient async/await APIs.
 
+## Testing Best Practices
+
+### When to Use HTTPAssertion
+
+HTTPAssertion is designed for **integration testing scenarios** where you need to verify that UI interactions trigger the correct network requests. However, it's important to understand when this tool is appropriate and when other testing approaches are preferable.
+
+#### ✅ **Good Use Cases**
+- **End-to-end UI testing**: Verifying that user interactions (button taps, form submissions) trigger expected analytics or logging requests
+- **Integration verification**: Ensuring UI flows correctly integrate with backend APIs
+- **Third-party SDK validation**: Testing that external SDKs make expected network calls
+- **Cross-component testing**: Verifying complex user journeys that span multiple app components
+
+#### ❌ **Consider Unit Tests Instead**
+- **HTTP client logic**: Test your networking layer directly with unit tests
+- **Request formatting**: Use unit tests to verify URL construction, headers, and request bodies
+- **Response parsing**: Test JSON decoding and data transformation in isolation
+- **Business logic**: Test your service and repository layers independently
+- **Error handling**: Unit test how your app handles network errors and edge cases
+
+### Recommended Testing Strategy
+
+Follow the **testing pyramid** principle:
+
+```
+    /\
+   /  \     <- Few UI tests (including HTTPAssertion)
+  /____\
+ /      \    <- Some integration tests
+/__________\  <- Many unit tests
+```
+
+1. **Unit Tests (Most)**: Test individual components, HTTP clients, and business logic in isolation
+2. **Integration Tests (Some)**: Test how components work together, including API contracts
+3. **UI Tests with HTTPAssertion (Few)**: Test critical user journeys and ensure UI properly triggers network requests
+
+HTTPAssertion fills the gap between unit tests and pure UI testing, but it shouldn't replace proper unit testing of your networking layer.
+
 ## Requirements
 
 - iOS 15.0+ / macOS 12.0+
