@@ -218,6 +218,38 @@ waitForRequest(
 )
 ```
 
+#### Perform Action and Assert Request
+
+Combine UI actions with HTTP request assertions in a single call:
+
+```swift
+// Perform an action and wait for a specific HTTP request
+try await HTTPPerformActionAndAssertRequested(
+    urlPattern: "https://api\\.example\\.com/search.*",
+    method: "GET",
+    timeout: 5.0
+) {
+    // UI action that should trigger the HTTP request
+    app.textFields["searchField"].tap()
+    app.textFields["searchField"].typeText("swift")
+    app.buttons["Search"].tap()
+} onRequested: { request in
+    // Optional: Inspect the captured request
+    print("Search request made: \(request.request.url?.absoluteString ?? "")")
+    
+    // Additional assertions on the request
+    XCTAssertTrue(request.request.url?.query?.contains("q=swift") == true)
+}
+
+// Simplified version without request inspection
+try await HTTPPerformActionAndAssertRequested(
+    url: "https://analytics.example.com/event",
+    method: "POST"
+) {
+    app.buttons["Track Event"].tap()
+}
+```
+
 ## How It Works
 
 1. **HTTP Interception**: HTTPAssertionLogging uses method swizzling to intercept `URLSessionConfiguration.default` and `URLSessionConfiguration.ephemeral`, adding a custom `URLProtocol` that logs all HTTP requests and responses.
