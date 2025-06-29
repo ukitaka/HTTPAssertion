@@ -100,47 +100,19 @@ final class DemoUITests: XCTestCase {
     func testContextUpdateMechanism() async throws {
         // Test the new context update mechanism using waitForContextUpdate
         
-        // 1. Wait for user context to be available and verify its content
-        let userContext: UserContext? = try await waitForContextUpdate(
-            forKey: "user_context",
-            app: app,
-            timeout: 10.0
-        )
-        
-        XCTAssertNotNil(userContext, "User context should be available")
-        if let userContext = userContext {
-            XCTAssertEqual(userContext.username, "TestUser")
-            XCTAssertEqual(userContext.currentScreen, "ContentView")
-            XCTAssertEqual(userContext.isLoggedIn, true)
-        }
-        
-        // 2. Wait for typed device info context retrieval (deviceInfo from ContentView)
-        let deviceInfo: DeviceInfo? = try await waitForContextUpdate(
-            forKey: "deviceInfo",
-            app: app,
-            timeout: 10.0
-        )
-        
-        XCTAssertNotNil(deviceInfo, "Device info should be available")
-        XCTAssertEqual(deviceInfo?.deviceModel, "iPhone Simulator")
-        
-        // 3. Wait for app_state context from URL scheme update
-        let appState: AppState? = try await waitForContextUpdate(
+        // Wait for app_state context from periodic updates (only test this since we removed ContentView context updates)
+        let appState: AppState = try await waitForContextUpdate(
             forKey: "app_state",
-            app: app,
             timeout: 15.0
         )
         
-        if let appState = appState {
-            XCTAssertEqual(appState.version, "1.0.0")
-            XCTAssertEqual(appState.environment, "debug")
-        }
+        XCTAssertEqual(appState.version, "1.0.0")
+        XCTAssertEqual(appState.environment, "debug")
         
-        // 4. Verify all context keys are available
+        // Verify available context keys
         let allKeys = await Context.listKeys()
         print("All available context keys after update: \(allKeys)")
-        XCTAssertTrue(allKeys.contains("user_context"), "Should have user_context key")
-        XCTAssertTrue(allKeys.contains("deviceInfo"), "Should have deviceInfo key")
+        XCTAssertTrue(allKeys.contains("app_state"), "Should have app_state key")
     }
     
     @MainActor

@@ -6,9 +6,20 @@ public final class HTTPAssertionLogging {
     private static let lock = NSLock()
     private nonisolated(unsafe) static var isStarted = false
     private nonisolated(unsafe) static var isSwizzled = false
+    private nonisolated(unsafe) static var contextUpdateTask: Task<Void, Never>?
     
     /// Starts HTTP request interception and logging
     public static func start() {
+        startInternal(contextUpdateInterval: nil, contextUpdater: nil)
+    }
+    
+    /// Starts HTTP request interception and logging with context updates
+    public static func start(contextUpdateInterval: TimeInterval = 1.0, contextUpdater: @escaping @Sendable () async -> Void) {
+        startInternal(contextUpdateInterval: contextUpdateInterval, contextUpdater: contextUpdater)
+    }
+    
+    /// Internal implementation for starting HTTP assertion logging
+    private static func startInternal(contextUpdateInterval: TimeInterval?, contextUpdater: (@Sendable () async -> Void)?) {
         lock.lock()
         defer { lock.unlock() }
         
@@ -26,6 +37,16 @@ public final class HTTPAssertionLogging {
             await HTTPRequests.initialize()
             await Context.initialize()
         }
+        
+        // Start periodic context updates if provided
+        if let interval = contextUpdateInterval, let updater = contextUpdater {
+            contextUpdateTask = Task.detached {
+                while !Task.isCancelled {
+                    await updater()
+                    try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                }
+            }
+        }
     }
     
     /// Stops HTTP request interception
@@ -35,6 +56,10 @@ public final class HTTPAssertionLogging {
         
         guard isStarted else { return }
         isStarted = false
+        
+        // Cancel context update task
+        contextUpdateTask?.cancel()
+        contextUpdateTask = nil
         
         // Unregister custom URLProtocol
         URLProtocol.unregisterClass(HTTPAssertionProtocol.self)

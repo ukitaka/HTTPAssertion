@@ -6,7 +6,6 @@ struct ContentView: View {
     @State private var searchQuery = ""
     @State private var isLoading = false
     @State private var lastRequestInfo = ""
-    @State private var contextStored = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -14,18 +13,6 @@ struct ContentView: View {
                 .font(.largeTitle)
                 .padding()
             
-            // Context Storage Section
-            HStack {
-                Button("Store User Context") {
-                    storeUserContext()
-                }
-                .buttonStyle(.borderedProminent)
-                
-                if contextStored {
-                    Text("✓ Context stored")
-                        .foregroundColor(.green)
-                }
-            }
             
             TextField("Enter search query", text: $searchQuery)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -68,10 +55,6 @@ struct ContentView: View {
             Spacer()
         }
         .padding()
-        .onAppear {
-            // Store initial context when view appears
-            storeUserContext()
-        }
     }
     
     private func performGoogleSearch() {
@@ -128,39 +111,6 @@ struct ContentView: View {
         task.resume()
     }
     
-    private func storeUserContext() {
-        let userContext = UserContext(
-            currentScreen: "ContentView",
-            lastUpdated: Date(),
-            username: "TestUser",
-            isLoggedIn: true,
-            preferences: [
-                "theme": "light",
-                "language": "en"
-            ]
-        )
-        
-        Task {
-            do {
-                // Store as Codable object
-                try await Context.store(userContext, forKey: "user_context")
-                
-                // Also store device info as typed object
-                let deviceInfo = DeviceInfo(
-                    deviceModel: "iPhone Simulator",
-                    osVersion: UIDevice.current.systemVersion,
-                    appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-                )
-                try await Context.store(deviceInfo, forKey: "deviceInfo")
-                
-                await MainActor.run {
-                    contextStored = true
-                }
-            } catch {
-                print("Failed to store context: \(error)")
-            }
-        }
-    }
 }
 
 #Preview {

@@ -2,6 +2,24 @@ import Foundation
 import XCTest
 import HTTPAssertionLogging
 
+/// Errors that can occur during context wait operations
+public enum ContextWaitError: Error, LocalizedError {
+    case invalidStoragePath(key: String)
+    case retrievalFailed(key: String)
+    case timeout(key: String, timeout: TimeInterval)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .invalidStoragePath(let key):
+            return "Could not determine storage path for context key: \(key)"
+        case .retrievalFailed(let key):
+            return "Failed to retrieve context value for key: \(key)"
+        case .timeout(let key, let timeout):
+            return "Context update timed out after \(timeout)s for key: \(key)"
+        }
+    }
+}
+
 /// XCTestCase extensions for HTTP assertion wait methods
 public extension XCTestCase {
     
@@ -152,42 +170,30 @@ public extension XCTestCase {
     
     // MARK: - Context Wait Methods
     
-    /// Requests context update from the app (for XCUITest)
-    @available(macOS 13.3, iOS 16.4, *)
-    func requestContextUpdate(app: XCUIApplication) async throws {
-        try await Context.requestUpdate(app: app)
-    }
-    
-    // MARK: - Context Wait Methods
-    
     /// Waits for a context value to be updated or become available
-    @available(macOS 13.3, iOS 16.4, *)
     func waitForContextUpdate<T: Codable & Sendable>(
         forKey key: String,
-        app: XCUIApplication,
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
-    ) async throws -> T? {
-        // Request initial context update
-        try await Context.requestUpdate(app: app)
-        
-        // Small delay to ensure the URL has been processed
-        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-        
-        // Record the time after the delay
-        let requestTime = Date()
-        
+    ) async throws -> T {
         // Get the context file URL using FileStorage
         guard let fileURL = await Context.storage.fileURL(forKey: key) else {
             XCTFail("Could not determine context file path", file: file, line: line)
-            return nil
+            throw ContextWaitError.invalidStoragePath(key: key)
         }
         
         let filePath = fileURL.path
         
-        // Check if file existed before the request
-        let fileExistedBefore = FileManager.default.fileExists(atPath: filePath)
+        // Get initial file modification time (or nil if file doesn't exist)
+        let initialModificationTime: Date? = {
+            if FileManager.default.fileExists(atPath: filePath),
+               let attributes = try? FileManager.default.attributesOfItem(atPath: filePath),
+               let modificationDate = attributes[.modificationDate] as? Date {
+                return modificationDate
+            }
+            return nil
+        }()
         
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ -> Bool in
@@ -196,19 +202,18 @@ public extension XCTestCase {
                 
                 Task.detached {
                     let fm = FileManager.default
-                    // Check if file exists now
-                    if fm.fileExists(atPath: filePath) {
-                        if !fileExistedBefore {
-                            // File was created after the request - this counts as an update
+                    // Check if file exists and get its current modification date
+                    if fm.fileExists(atPath: filePath),
+                       let attributes = try? fm.attributesOfItem(atPath: filePath),
+                       let currentModificationDate = attributes[.modificationDate] as? Date {
+                        
+                        if let initialModTime = initialModificationTime {
+                            // File existed before, check if it was modified
+                            fileWasUpdated = currentModificationDate > initialModTime
+                        } else {
+                            // File was created during waiting
                             fileWasUpdated = true
-                        } else if let attributes = try? fm.attributesOfItem(atPath: filePath),
-                                  let modificationDate = attributes[.modificationDate] as? Date {
-                            // File existed before, check if it was modified after the request
-                            fileWasUpdated = modificationDate > requestTime
                         }
-                    } else {
-                        // File still doesn't exist
-                        fileWasUpdated = false
                     }
                     semaphore.signal()
                 }
@@ -221,14 +226,23 @@ public extension XCTestCase {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            return try await Context.retrieve(T.self, forKey: key)
+            if let value = try await Context.retrieve(T.self, forKey: key) {
+                return value
+            } else {
+                XCTFail(
+                    "Context value for key '\(key)' exists but could not be retrieved",
+                    file: file,
+                    line: line
+                )
+                throw ContextWaitError.retrievalFailed(key: key)
+            }
         } else {
             XCTFail(
-                "Context value for key '\(key)' was not found within timeout",
+                "Context value for key '\(key)' was not updated within timeout",
                 file: file,
                 line: line
             )
-            return nil
+            throw ContextWaitError.timeout(key: key, timeout: timeout)
         }
     }
 }

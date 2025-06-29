@@ -17,18 +17,6 @@ public struct UserContext: Codable, Sendable, Equatable {
     }
 }
 
-public struct DeviceInfo: Codable, Sendable {
-    public let deviceModel: String
-    public let osVersion: String
-    public let appVersion: String
-    
-    public init(deviceModel: String, osVersion: String, appVersion: String) {
-        self.deviceModel = deviceModel
-        self.osVersion = osVersion
-        self.appVersion = appVersion
-    }
-}
-
 public struct AppState: Codable, Sendable {
     public let version: String
     public let build: String
