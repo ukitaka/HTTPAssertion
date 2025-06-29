@@ -42,12 +42,29 @@ jobs:
     - name: Build Example Project
       run: |
         cd Example/Demo
-        xcodebuild build -project Demo.xcodeproj -scheme Demo -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0'
+        set -o pipefail
+        xcodebuild build \
+          -scheme Demo \
+          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -derivedDataPath DerivedData \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          | xcpretty
+      timeout-minutes: 15
     
     - name: Run UI Tests
       run: |
         cd Example/Demo
-        xcodebuild test -project Demo.xcodeproj -scheme Demo -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' -only-testing:DemoUITests
+        set -o pipefail
+        xcodebuild test \
+          -scheme Demo \
+          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -derivedDataPath DerivedData \
+          -only-testing:DemoUITests \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          | xcpretty
+      timeout-minutes: 15
 
   create-release:
     name: Create Release
