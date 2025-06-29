@@ -37,6 +37,11 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
             return false
         }
         
+        // Check if host should be recorded based on filter
+        guard HTTPAssertionLogging.shouldRecordHost(url.host) else {
+            return false
+        }
+        
         return true
     }
     

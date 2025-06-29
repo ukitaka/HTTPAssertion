@@ -7,24 +7,29 @@ public final class HTTPAssertionLogging {
     private nonisolated(unsafe) static var isStarted = false
     private nonisolated(unsafe) static var isSwizzled = false
     private nonisolated(unsafe) static var contextUpdateTask: Task<Void, Never>?
+    // TODO: Switch to Swift Regex when iOS 15 support is dropped
+    private nonisolated(unsafe) static var allowedHostRegex: NSRegularExpression?
     
     /// Starts HTTP request interception and logging
-    public static func start() {
-        startInternal(contextUpdateInterval: nil, contextUpdater: nil)
+    public static func start(allowedHosts: [String] = []) {
+        startInternal(allowedHosts: allowedHosts, contextUpdateInterval: nil, contextUpdater: nil)
     }
     
     /// Starts HTTP request interception and logging with context updates
-    public static func start(contextUpdateInterval: TimeInterval = 1.0, contextUpdater: @escaping @Sendable () async throws -> Void) {
-        startInternal(contextUpdateInterval: contextUpdateInterval, contextUpdater: contextUpdater)
+    public static func start(allowedHosts: [String] = [], contextUpdateInterval: TimeInterval = 1.0, contextUpdater: @escaping @Sendable () async throws -> Void) {
+        startInternal(allowedHosts: allowedHosts, contextUpdateInterval: contextUpdateInterval, contextUpdater: contextUpdater)
     }
     
     /// Internal implementation for starting HTTP assertion logging
-    private static func startInternal(contextUpdateInterval: TimeInterval?, contextUpdater: (@Sendable () async throws -> Void)?) {
+    private static func startInternal(allowedHosts: [String], contextUpdateInterval: TimeInterval?, contextUpdater: (@Sendable () async throws -> Void)?) {
         lock.lock()
         defer { lock.unlock() }
         
         guard !isStarted else { return }
         isStarted = true
+        
+        // Set allowed hosts filter by creating combined regex
+        self.allowedHostRegex = createHostRegex(from: allowedHosts)
         
         // Register custom URLProtocol
         URLProtocol.registerClass(HTTPAssertionProtocol.self)
@@ -69,6 +74,59 @@ public final class HTTPAssertionLogging {
         URLProtocol.unregisterClass(HTTPAssertionProtocol.self)
         
         unswizzle()
+    }
+    
+    /// Checks if a host should be recorded based on the allowed hosts filter
+    internal static func shouldRecordHost(_ host: String?) -> Bool {
+        guard let host = host, !host.isEmpty else { return false }
+        
+        // If no host filter is specified, record all
+        guard let regex = allowedHostRegex else {
+            return true
+        }
+        
+        // Check if host matches the combined regex pattern
+        let range = NSRange(location: 0, length: host.utf16.count)
+        return regex.firstMatch(in: host, options: [], range: range) != nil
+    }
+    
+    /// Creates a combined regex pattern from host specifications
+    private static func createHostRegex(from hosts: [String]) -> NSRegularExpression? {
+        guard !hosts.isEmpty else { return nil }
+        
+        let patterns: [String] = hosts.compactMap { hostSpec in
+            if hostSpec.hasPrefix("*.") {
+                // Convert *.example.com to pattern that matches any subdomain AND the domain itself
+                let domain = String(hostSpec.dropFirst(2)) // Remove the "*."
+                guard !domain.isEmpty else { return nil } // Invalid pattern like "*."
+                let escapedDomain = NSRegularExpression.escapedPattern(for: domain)
+                // Pattern matches either "domain.com" or "anything.domain.com"
+                return "(^" + escapedDomain + "$|.*\\." + escapedDomain + "$)"
+            } else if hostSpec.hasPrefix("*") {
+                // Invalid pattern like "*github.com" (missing dot after asterisk)
+                print("HTTPAssertion: Invalid host pattern '\(hostSpec)'. Wildcard patterns must start with '*.' (e.g., '*.github.com')")
+                return nil
+            } else {
+                // Exact host match
+                return "^" + NSRegularExpression.escapedPattern(for: hostSpec) + "$"
+            }
+        }
+        
+        // If no valid patterns remain, return nil (allow all hosts)
+        guard !patterns.isEmpty else {
+            print("HTTPAssertion: No valid host patterns found, allowing all hosts")
+            return nil
+        }
+        
+        // Combine all patterns with OR (|)
+        let combinedPattern = patterns.joined(separator: "|")
+        
+        do {
+            return try NSRegularExpression(pattern: combinedPattern, options: [])
+        } catch {
+            print("HTTPAssertion: Failed to create host regex pattern: \(error)")
+            return nil
+        }
     }
     
     // MARK: - Method Swizzling

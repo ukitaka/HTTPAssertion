@@ -5,7 +5,10 @@ import HTTPAssertionLogging
 struct DemoApp: App {
     init() {
         #if DEBUG
-        HTTPAssertionLogging.start(contextUpdateInterval: 2.0) {
+        HTTPAssertionLogging.start(
+            allowedHosts: ["*.github.com", "httpbin.org", "*.typicode.com", "*.google.com"],
+            contextUpdateInterval: 2.0
+        ) {
             // Update user context with current state
             let userContext = UserContext(
                 currentScreen: "ContentView",
