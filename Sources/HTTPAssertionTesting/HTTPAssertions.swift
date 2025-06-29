@@ -414,4 +414,41 @@ public func HTTPAssertQueryParameters(
     }
 }
 
+/// Asserts that a request does NOT contain a specific query parameter with the given value
+/// This is useful for testing negative cases where you want to ensure a parameter doesn't have a specific value
+/// URL-encoded values are automatically decoded for comparison
+public func HTTPAssertQueryParameterNotEqual(
+    _ request: HTTPRequests.HTTPRequest,
+    name: String,
+    value: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard let url = request.request.url,
+          let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+          let queryItems = components.queryItems else {
+        // If there are no query parameters at all, the assertion passes
+        return
+    }
+    
+    let matchingItems = queryItems.filter { $0.name == name }
+    
+    // If parameter doesn't exist, assertion passes
+    guard !matchingItems.isEmpty else {
+        return
+    }
+    
+    // Check if any of the matching parameters has the unwanted value
+    let foundMatch = matchingItems.contains { item in
+        guard let paramValue = item.value else { return value.isEmpty }
+        // URL decode the parameter value for comparison
+        let decodedValue = paramValue.removingPercentEncoding ?? paramValue
+        return decodedValue == value
+    }
+    
+    if foundMatch {
+        XCTFail("Query parameter '\(name)' should not have value '\(value)' but it does", file: file, line: line)
+    }
+}
+
 
