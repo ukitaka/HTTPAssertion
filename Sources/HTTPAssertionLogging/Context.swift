@@ -2,7 +2,8 @@ import Foundation
 
 /// Generic context storage for sharing arbitrary Codable data between app and UI tests
 public enum Context {
-    private static let storage = FileStorage(subdirectory: "Context")
+    /// The underlying file storage for contexts
+    public static let storage = FileStorage(subdirectory: "Context")
     
     /// Initializes the context storage directory
     public static func initialize() async {
@@ -18,28 +19,10 @@ public enum Context {
         }
     }
     
-    /// Stores a dictionary context with a given key
-    public static func store(_ dictionary: [String: String], forKey key: String) async throws {
-        do {
-            try await storage.store(dictionary, forKey: key)
-        } catch {
-            throw ContextError.encodingFailed(error)
-        }
-    }
-    
     /// Retrieves a context object for a given key
     public static func retrieve<T: Codable & Sendable>(_ type: T.Type, forKey key: String) async throws -> T? {
         do {
             return try await storage.retrieve(type, forKey: key)
-        } catch {
-            throw ContextError.decodingFailed(error)
-        }
-    }
-    
-    /// Retrieves a dictionary context for a given key
-    public static func retrieve(forKey key: String) async throws -> [String: String]? {
-        do {
-            return try await storage.retrieve([String: String].self, forKey: key)
         } catch {
             throw ContextError.decodingFailed(error)
         }

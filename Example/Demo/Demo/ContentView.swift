@@ -145,14 +145,13 @@ struct ContentView: View {
                 // Store as Codable object
                 try await Context.store(userContext, forKey: "user_context")
                 
-                // Also store device info as dictionary
-                let deviceDict: [String: String] = [
-                    "model": "iPhone Simulator",
-                    "os": UIDevice.current.systemVersion,
-                    "app": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0",
-                    "timestamp": String(Date().timeIntervalSince1970)
-                ]
-                try await Context.store(deviceDict, forKey: "deviceInfo")
+                // Also store device info as typed object
+                let deviceInfo = DeviceInfo(
+                    deviceModel: "iPhone Simulator",
+                    osVersion: UIDevice.current.systemVersion,
+                    appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+                )
+                try await Context.store(deviceInfo, forKey: "deviceInfo")
                 
                 await MainActor.run {
                     contextStored = true

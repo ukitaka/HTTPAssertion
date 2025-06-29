@@ -28,3 +28,15 @@ public struct DeviceInfo: Codable, Sendable {
         self.appVersion = appVersion
     }
 }
+
+public struct AppState: Codable, Sendable {
+    public let version: String
+    public let build: String
+    public let environment: String
+    
+    public init(version: String, build: String, environment: String) {
+        self.version = version
+        self.build = build
+        self.environment = environment
+    }
+}

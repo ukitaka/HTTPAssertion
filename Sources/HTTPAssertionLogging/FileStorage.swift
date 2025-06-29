@@ -1,13 +1,13 @@
 import Foundation
 
 /// Generic file-based storage for Codable data
-actor FileStorage {
+public actor FileStorage {
     private let fileManager = FileManager.default
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     private let subdirectory: String
     
-    internal var storageDirectory: URL? {
+    public var storageDirectory: URL? {
         #if targetEnvironment(simulator)
         // Use SIMULATOR_SHARED_RESOURCES_DIRECTORY for simulator
         if let sharedDir = ProcessInfo.processInfo.environment["SIMULATOR_SHARED_RESOURCES_DIRECTORY"] {
@@ -26,7 +26,7 @@ actor FileStorage {
             .appendingPathComponent(subdirectory)
     }
     
-    init(subdirectory: String) {
+    public init(subdirectory: String) {
         self.subdirectory = subdirectory
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
@@ -34,7 +34,7 @@ actor FileStorage {
     }
     
     /// Initializes the storage directory
-    func initialize() {
+    public func initialize() {
         guard let directory = storageDirectory else { return }
         
         do {
@@ -45,7 +45,7 @@ actor FileStorage {
     }
     
     /// Stores a Codable object with a given key
-    func store<T: Codable>(_ object: T, forKey key: String) throws {
+    public func store<T: Codable>(_ object: T, forKey key: String) throws {
         guard let directory = storageDirectory else {
             throw FileStorageError.noStorageDirectory
         }
@@ -62,8 +62,14 @@ actor FileStorage {
         }
     }
     
+    /// Gets the file URL for a given key
+    public func fileURL(forKey key: String) -> URL? {
+        guard let directory = storageDirectory else { return nil }
+        return directory.appendingPathComponent("\(key).json")
+    }
+    
     /// Retrieves a Codable object for a given key
-    func retrieve<T: Codable>(_ type: T.Type, forKey key: String) throws -> T? {
+    public func retrieve<T: Codable>(_ type: T.Type, forKey key: String) throws -> T? {
         guard let directory = storageDirectory else {
             throw FileStorageError.noStorageDirectory
         }
@@ -83,7 +89,7 @@ actor FileStorage {
     }
     
     /// Lists all stored keys
-    func listKeys() -> [String] {
+    public func listKeys() -> [String] {
         guard let directory = storageDirectory else { return [] }
         
         do {
@@ -98,7 +104,7 @@ actor FileStorage {
     }
     
     /// Removes a stored object for a given key
-    func remove(forKey key: String) throws {
+    public func remove(forKey key: String) throws {
         guard let directory = storageDirectory else {
             throw FileStorageError.noStorageDirectory
         }
@@ -111,7 +117,7 @@ actor FileStorage {
     }
     
     /// Clears all stored objects
-    func clear() {
+    public func clear() {
         guard let directory = storageDirectory else { return }
         
         do {
@@ -125,7 +131,7 @@ actor FileStorage {
     }
     
     /// Loads all objects from disk
-    func loadAll<T: Codable>(_ type: T.Type) -> [T] {
+    public func loadAll<T: Codable>(_ type: T.Type) -> [T] {
         guard let directory = storageDirectory else { return [] }
         
         var objects: [T] = []
@@ -155,7 +161,7 @@ actor FileStorage {
         case modificationDate
     }
     
-    func loadSorted<T: Codable>(_ type: T.Type, limit: Int? = nil, sortBy: SortKey = .modificationDate, ascending: Bool = true, since: Date? = nil) -> [T] {
+    public func loadSorted<T: Codable>(_ type: T.Type, limit: Int? = nil, sortBy: SortKey = .modificationDate, ascending: Bool = true, since: Date? = nil) -> [T] {
         guard let directory = storageDirectory else { return [] }
         
         do {
@@ -224,12 +230,12 @@ actor FileStorage {
 }
 
 /// Errors that can occur during file storage operations
-enum FileStorageError: Error, LocalizedError {
+public enum FileStorageError: Error, LocalizedError {
     case noStorageDirectory
     case encodingFailed(Error)
     case decodingFailed(Error)
     
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .noStorageDirectory:
             return "No storage directory available"
