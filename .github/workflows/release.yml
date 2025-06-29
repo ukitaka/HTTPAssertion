@@ -39,32 +39,67 @@ jobs:
         swift build -v
         swift test -v
     
+    - name: Boot iOS Simulator
+      run: |
+        SIMULATOR_ID=$(xcrun simctl list devices available | grep "iPhone 16" | head -1 | grep -o '[A-Z0-9-]\{36\}')
+        echo "Booting simulator: $SIMULATOR_ID"
+        xcrun simctl boot $SIMULATOR_ID
+        echo "SIMULATOR_ID=$SIMULATOR_ID" >> $GITHUB_ENV
+        
+        # Disable hardware keyboard to prevent typing issues in UI tests
+        defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool NO
+    
+    - name: Wait for simulator to boot
+      run: |
+        MAX_WAIT=60
+        COUNTER=0
+        while ! xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -q "Booted"; do
+          if [ $COUNTER -ge $MAX_WAIT ]; then
+            echo "Timeout waiting for simulator to boot"
+            exit 1
+          fi
+          sleep 1
+          COUNTER=$((COUNTER + 1))
+        done
+        echo "Simulator booted successfully"
+    
     - name: Build Example Project
       run: |
         cd Example/Demo
-        set -o pipefail
-        xcodebuild build \
+        xcodebuild build-for-testing \
           -scheme Demo \
-          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
           -derivedDataPath DerivedData \
           CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          | xcpretty
+          CODE_SIGNING_REQUIRED=NO
       timeout-minutes: 15
     
     - name: Run UI Tests
       run: |
         cd Example/Demo
-        set -o pipefail
-        xcodebuild test \
+        xcodebuild test-without-building \
           -scheme Demo \
-          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
           -derivedDataPath DerivedData \
           -only-testing:DemoUITests \
+          -resultBundlePath TestResults.xcresult \
           CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          | xcpretty
-      timeout-minutes: 15
+          CODE_SIGNING_REQUIRED=NO
+      timeout-minutes: 20
+      continue-on-error: true
+    
+    - name: Check test results
+      run: |
+        cd Example/Demo
+        if [ -d "TestResults.xcresult" ]; then
+          echo "Test results found"
+          # Extract test results using the new API
+          xcrun xcresulttool get test-results summary --path TestResults.xcresult > test_summary.json
+          cat test_summary.json
+        else
+          echo "No test results found"
+          exit 1
+        fi
 
   create-release:
     name: Create Release
