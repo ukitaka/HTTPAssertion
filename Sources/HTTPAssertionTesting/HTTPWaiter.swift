@@ -30,7 +30,7 @@ public enum HTTPWaiter {
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: HTTPRequests.HTTPRequest? = nil
                 Task.detached {
-                    let requests = await HTTPRequests.allRequests()
+                    let requests = await HTTPRequests.recentRequests(limit: 100)
                     foundRequest = requests.first { matcher.matches($0) && $0.response != nil }
                     semaphore.signal()
                 }
@@ -43,7 +43,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.allRequests()
+            let requests = await HTTPRequests.recentRequests(limit: 100)
             return requests.first { matcher.matches($0) && $0.response != nil }
         } else {
             XCTFail(
@@ -70,7 +70,7 @@ public enum HTTPWaiter {
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: HTTPRequests.HTTPRequest? = nil
                 Task.detached {
-                    let requests = await HTTPRequests.allRequests()
+                    let requests = await HTTPRequests.recentRequests(limit: 100)
                     foundRequest = requests.first { $0.id == requestID && $0.response != nil }
                     semaphore.signal()
                 }
@@ -83,7 +83,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.allRequests()
+            let requests = await HTTPRequests.recentRequests(limit: 100)
             return requests.first { $0.id == requestID && $0.response != nil }
         } else {
             XCTFail(
@@ -120,7 +120,7 @@ public enum HTTPWaiter {
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: HTTPRequests.HTTPRequest? = nil
                 Task.detached {
-                    let requests = await HTTPRequests.allRequests()
+                    let requests = await HTTPRequests.recentRequests(limit: 100)
                     foundRequest = requests.first { matcher.matches($0) }
                     semaphore.signal()
                 }
@@ -133,7 +133,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.allRequests()
+            let requests = await HTTPRequests.recentRequests(limit: 100)
             return requests.first { matcher.matches($0) }
         } else {
             XCTFail(

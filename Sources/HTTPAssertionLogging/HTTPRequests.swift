@@ -37,6 +37,16 @@ public enum HTTPRequests {
         let loadedRequests = await storage.loadAll(HTTPRequest.self)
         return loadedRequests.sorted { $0.timestamp < $1.timestamp }
     }
+    
+    /// Gets stored requests sorted by modification time with optional limit
+    public static func recentRequests(limit: Int? = nil) async -> [HTTPRequest] {
+        return await storage.loadSorted(HTTPRequest.self, limit: limit, sortBy: .modificationDate, ascending: false)
+    }
+    
+    /// Gets stored requests sorted by creation time (request time) with optional limit
+    public static func requestsByCreationTime(limit: Int? = nil, ascending: Bool = true) async -> [HTTPRequest] {
+        return await storage.loadSorted(HTTPRequest.self, limit: limit, sortBy: .creationDate, ascending: ascending)
+    }
 }
 
 extension HTTPRequests {

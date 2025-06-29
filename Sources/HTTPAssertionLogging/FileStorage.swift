@@ -7,7 +7,7 @@ actor FileStorage {
     private let decoder = JSONDecoder()
     private let subdirectory: String
     
-    private var storageDirectory: URL? {
+    internal var storageDirectory: URL? {
         #if targetEnvironment(simulator)
         // Use SIMULATOR_SHARED_RESOURCES_DIRECTORY for simulator
         if let sharedDir = ProcessInfo.processInfo.environment["SIMULATOR_SHARED_RESOURCES_DIRECTORY"] {
@@ -54,10 +54,9 @@ actor FileStorage {
         
         do {
             let data = try encoder.encode(object)
-            if fileManager.fileExists(atPath: fileURL.path) {
-                try fileManager.removeItem(at: fileURL)
-            }
-            fileManager.createFile(atPath: fileURL.path, contents: data, attributes: nil)
+            // Use atomic write to update file in-place
+            // This preserves creation date and updates modification date
+            try data.write(to: fileURL, options: .atomic)
         } catch {
             throw FileStorageError.encodingFailed(error)
         }
@@ -149,6 +148,62 @@ actor FileStorage {
         }
         
         return objects
+    }
+    
+    enum SortKey {
+        case creationDate
+        case modificationDate
+    }
+    
+    func loadSorted<T: Codable>(_ type: T.Type, limit: Int? = nil, sortBy: SortKey = .modificationDate, ascending: Bool = true) -> [T] {
+        guard let directory = storageDirectory else { return [] }
+        
+        do {
+            let properties: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .nameKey]
+            let files = try fileManager.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: properties,
+                options: .skipsHiddenFiles
+            )
+            
+            let jsonFiles = files.filter { $0.pathExtension == "json" }
+            
+            let sortedFiles = jsonFiles.sorted(by: { file1, file2 in
+                let date1: Date?
+                let date2: Date?
+                
+                if sortBy == .creationDate {
+                    date1 = try? file1.resourceValues(forKeys: [.creationDateKey]).creationDate
+                    date2 = try? file2.resourceValues(forKeys: [.creationDateKey]).creationDate
+                } else {
+                    date1 = try? file1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+                    date2 = try? file2.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+                }
+                
+                guard let d1 = date1, let d2 = date2 else {
+                    return ascending
+                }
+                return ascending ? d1 < d2 : d1 > d2
+            })
+            
+            let filesToLoad = limit.map { Array(sortedFiles.prefix($0)) } ?? sortedFiles
+            
+            var objects: [T] = []
+            for file in filesToLoad {
+                do {
+                    let data = try Data(contentsOf: file)
+                    let object = try decoder.decode(type, from: data)
+                    objects.append(object)
+                } catch {
+                    // Skip corrupted files
+                    continue
+                }
+            }
+            
+            return objects
+        } catch {
+            return []
+        }
     }
 }
 

@@ -5,38 +5,33 @@ final class HTTPAssertionTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        HTTPAssertion.clearRecordedRequests()
     }
     
     override func tearDown() {
-        HTTPAssertion.stop()
+        HTTPAssertionLogging.stop()
         super.tearDown()
     }
     
     func testStartAndStop() {
         // Test that start and stop can be called without issues
-        HTTPAssertion.start()
-        HTTPAssertion.stop()
+        HTTPAssertionLogging.start()
+        HTTPAssertionLogging.stop()
         
         // Can be called multiple times safely
-        HTTPAssertion.start()
-        HTTPAssertion.start()
-        HTTPAssertion.stop()
-        HTTPAssertion.stop()
+        HTTPAssertionLogging.start()
+        HTTPAssertionLogging.start()
+        HTTPAssertionLogging.stop()
+        HTTPAssertionLogging.stop()
     }
     
-    func testClearRecordedRequests() {
-        // Test that clear can be called without issues
-        HTTPAssertion.clearRecordedRequests()
-    }
     
     func testRecordedHTTPRequestCodable() throws {
         // Test that RecordedHTTPRequest can be encoded and decoded
         let url = URL(string: "https://example.com")!
         let request = URLRequest(url: url)
         
-        let recordedRequest = RecordedHTTPRequest(
-            id: UUID(),
+        let recordedRequest = HTTPRequests.HTTPRequest(
+            id: UUID().uuidString,
             timestamp: Date(),
             request: request,
             response: HTTPURLResponse(
@@ -53,7 +48,7 @@ final class HTTPAssertionTests: XCTestCase {
         let decoder = JSONDecoder()
         
         let encoded = try encoder.encode(recordedRequest)
-        let decoded = try decoder.decode(RecordedHTTPRequest.self, from: encoded)
+        let decoded = try decoder.decode(HTTPRequests.HTTPRequest.self, from: encoded)
         
         XCTAssertEqual(decoded.id, recordedRequest.id)
         XCTAssertEqual(decoded.request.url, recordedRequest.request.url)
