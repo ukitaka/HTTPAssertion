@@ -160,6 +160,60 @@ final class DemoUITests: XCTestCase {
         
         XCTAssertTrue(allKeys.contains("deviceInfo"), "Should have deviceInfo key")
     }
+    
+    @MainActor
+    func testConvenienceAssertionMethods() async throws {
+        // Test the new convenience assertion methods
+        
+        // Example 1: Perform action and assert request was fired
+        try await HTTPPerformActionAndAssertRequested(
+            urlPattern: ".*google\\.com/search.*",
+            method: "GET"
+        ) {
+            // Action: Search on Google
+            let searchField = app.textFields["Enter search query"]
+            searchField.tap()
+            searchField.typeText("SwiftTesting")
+            
+            let searchButton = app.buttons["Search on Google"]
+            searchButton.tap()
+        } onRequested: { request in
+            // Verify the request details
+            print("Google search request fired: \(request.request.url?.absoluteString ?? "")")
+            XCTAssertTrue(request.request.url?.query?.contains("SwiftTesting") == true)
+        }
+        
+        // Example 2: Perform action and wait for response
+        try await HTTPPerformActionAndAssertResponse(
+            url: "https://api.github.com/zen",
+            method: "GET"
+        ) {
+            // Action: Call GitHub API
+            let githubButton = app.buttons["Call GitHub API"]
+            githubButton.tap()
+        } onRequested: { request in
+            // Called when request is fired
+            print("GitHub API request fired")
+            XCTAssertEqual(request.request.httpMethod, "GET")
+        } onResponse: { request in
+            // Called when response is received
+            print("GitHub API response received")
+            XCTAssertNotNil(request.response)
+            XCTAssertEqual(request.response?.statusCode, 200)
+        }
+        
+        // Example 3: Multiple actions with different APIs
+        try await HTTPPerformActionAndAssertRequested(
+            url: "https://httpbin.org/uuid",
+            method: "GET"
+        ) {
+            let httpbinButton = app.buttons["Call HTTPBin API"]
+            httpbinButton.tap()
+        } onRequested: { request in
+            print("HTTPBin request completed")
+            XCTAssertEqual(request.request.url?.absoluteString, "https://httpbin.org/uuid")
+        }
+    }
 }
 
 extension XCUIElement {

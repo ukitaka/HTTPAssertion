@@ -164,3 +164,154 @@ public func HTTPAssertRequestedOnce(
     )
 }
 
+// MARK: - Convenience Assertion Methods
+
+/// Performs an action and waits for a matching HTTP request to be fired
+public func HTTPPerformActionAndAssertRequested(
+    url: String? = nil,
+    urlPattern: String? = nil,
+    method: String? = nil,
+    headers: [String: String]? = nil,
+    queryParameters: [String: String]? = nil,
+    timeout: TimeInterval = 10.0,
+    file: StaticString = #filePath,
+    line: UInt = #line,
+    action: () async throws -> Void,
+    onRequested: ((HTTPRequests.HTTPRequest) async -> Void)? = nil
+) async throws {
+    let startTime = Date()
+    
+    // Perform the action
+    try await action()
+    
+    let matcher = HTTPRequestMatcher(
+        url: url,
+        urlPattern: urlPattern,
+        method: method,
+        headers: headers,
+        queryParameters: queryParameters
+    )
+    
+    let expectation = XCTNSPredicateExpectation(
+        predicate: NSPredicate { _, _ -> Bool in
+            let semaphore = DispatchSemaphore(value: 0)
+            var foundRequest: HTTPRequests.HTTPRequest? = nil
+            Task.detached {
+                let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: startTime)
+                foundRequest = requests.first { matcher.matches($0) }
+                semaphore.signal()
+            }
+            semaphore.wait()
+            return foundRequest != nil
+        },
+        object: nil
+    )
+    
+    let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
+    
+    if result == .completed {
+        let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: startTime)
+        if let matchedRequest = requests.first(where: { matcher.matches($0) }) {
+            await onRequested?(matchedRequest)
+        }
+    } else {
+        XCTFail(
+            "Request matching criteria was not fired after action within timeout: \(matcher.description)",
+            file: file,
+            line: line
+        )
+    }
+}
+
+/// Performs an action and waits for a matching HTTP request to receive a response
+public func HTTPPerformActionAndAssertResponse(
+    url: String? = nil,
+    urlPattern: String? = nil,
+    method: String? = nil,
+    headers: [String: String]? = nil,
+    queryParameters: [String: String]? = nil,
+    timeout: TimeInterval = 10.0,
+    file: StaticString = #filePath,
+    line: UInt = #line,
+    action: () async throws -> Void,
+    onRequested: ((HTTPRequests.HTTPRequest) async -> Void)? = nil,
+    onResponse: ((HTTPRequests.HTTPRequest) async -> Void)? = nil
+) async throws {
+    let startTime = Date()
+    
+    // Perform the action
+    try await action()
+    
+    let matcher = HTTPRequestMatcher(
+        url: url,
+        urlPattern: urlPattern,
+        method: method,
+        headers: headers,
+        queryParameters: queryParameters
+    )
+    
+    // First wait for the request to be fired
+    let requestExpectation = XCTNSPredicateExpectation(
+        predicate: NSPredicate { _, _ -> Bool in
+            let semaphore = DispatchSemaphore(value: 0)
+            var foundRequest: HTTPRequests.HTTPRequest? = nil
+            Task.detached {
+                let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: startTime)
+                foundRequest = requests.first { matcher.matches($0) }
+                semaphore.signal()
+            }
+            semaphore.wait()
+            return foundRequest != nil
+        },
+        object: nil
+    )
+    
+    let requestResult = await XCTWaiter.fulfillment(of: [requestExpectation], timeout: timeout / 2)
+    
+    guard requestResult == .completed else {
+        XCTFail(
+            "Request matching criteria was not fired after action within timeout: \(matcher.description)",
+            file: file,
+            line: line
+        )
+        return
+    }
+    
+    // Call onRequested callback
+    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: startTime)
+    if let matchedRequest = requests.first(where: { matcher.matches($0) }) {
+        await onRequested?(matchedRequest)
+    }
+    
+    // Then wait for the response
+    let responseExpectation = XCTNSPredicateExpectation(
+        predicate: NSPredicate { _, _ -> Bool in
+            let semaphore = DispatchSemaphore(value: 0)
+            var foundRequest: HTTPRequests.HTTPRequest? = nil
+            Task.detached {
+                let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: startTime)
+                foundRequest = requests.first { matcher.matches($0) && $0.response != nil }
+                semaphore.signal()
+            }
+            semaphore.wait()
+            return foundRequest != nil
+        },
+        object: nil
+    )
+    
+    let responseResult = await XCTWaiter.fulfillment(of: [responseExpectation], timeout: timeout / 2)
+    
+    if responseResult == .completed {
+        let updatedRequests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: startTime)
+        if let matchedRequest = updatedRequests.first(where: { matcher.matches($0) && $0.response != nil }) {
+            await onResponse?(matchedRequest)
+        }
+    } else {
+        XCTFail(
+            "Request matching criteria did not receive response after action within timeout: \(matcher.description)",
+            file: file,
+            line: line
+        )
+    }
+}
+
