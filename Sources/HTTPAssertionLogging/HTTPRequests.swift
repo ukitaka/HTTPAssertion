@@ -69,6 +69,76 @@ extension HTTPRequests {
             self.responseData = responseData
             self.error = error.map(CodableError.init)
         }
+        
+        // MARK: - Query Parameter Convenience Methods
+        
+        /// Returns the decoded value of a query parameter from this request
+        /// Returns nil if the parameter doesn't exist
+        public func queryParameter(name: String) -> String? {
+            guard let url = request.url,
+                  let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                  let queryItems = components.queryItems else {
+                return nil
+            }
+            
+            guard let item = queryItems.first(where: { $0.name == name }),
+                  let value = item.value else {
+                return nil
+            }
+            
+            // Return URL-decoded value
+            return value.removingPercentEncoding ?? value
+        }
+        
+        /// Returns all query parameters from this request as a dictionary with decoded values
+        /// If there are multiple parameters with the same name, only the last one is included
+        public func allQueryParameters() -> [String: String] {
+            guard let url = request.url,
+                  let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                  let queryItems = components.queryItems else {
+                return [:]
+            }
+            
+            var result: [String: String] = [:]
+            for item in queryItems {
+                if let value = item.value {
+                    // Store URL-decoded value
+                    result[item.name] = value.removingPercentEncoding ?? value
+                } else {
+                    result[item.name] = ""
+                }
+            }
+            
+            return result
+        }
+        
+        /// Returns all values for a query parameter (useful when multiple parameters have the same name)
+        /// All values are URL-decoded
+        public func queryParameterValues(name: String) -> [String] {
+            guard let url = request.url,
+                  let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                  let queryItems = components.queryItems else {
+                return []
+            }
+            
+            return queryItems
+                .filter { $0.name == name }
+                .compactMap { item in
+                    guard let value = item.value else { return "" }
+                    return value.removingPercentEncoding ?? value
+                }
+        }
+        
+        /// Checks if a query parameter exists in this request
+        public func hasQueryParameter(name: String) -> Bool {
+            guard let url = request.url,
+                  let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                  let queryItems = components.queryItems else {
+                return false
+            }
+            
+            return queryItems.contains { $0.name == name }
+        }
     }
     
     /// Codable wrapper for URLRequest

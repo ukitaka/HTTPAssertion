@@ -315,3 +315,103 @@ public func HTTPPerformActionAndAssertResponse(
     }
 }
 
+// MARK: - Query Parameter Assertions
+
+/// Asserts that a request contains a specific query parameter with the expected value
+/// URL-encoded values are automatically decoded for comparison
+public func HTTPAssertQueryParameter(
+    _ request: HTTPRequests.HTTPRequest,
+    name: String,
+    value: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard let url = request.request.url,
+          let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+          let queryItems = components.queryItems else {
+        XCTFail("Request does not contain any query parameters", file: file, line: line)
+        return
+    }
+    
+    let matchingItems = queryItems.filter { $0.name == name }
+    
+    guard !matchingItems.isEmpty else {
+        let availableParams = queryItems.map { $0.name }.joined(separator: ", ")
+        XCTFail("Query parameter '\(name)' not found. Available parameters: \(availableParams)", file: file, line: line)
+        return
+    }
+    
+    // Check if any of the matching parameters has the expected value
+    let foundMatch = matchingItems.contains { item in
+        guard let paramValue = item.value else { return value.isEmpty }
+        // URL decode the parameter value for comparison
+        let decodedValue = paramValue.removingPercentEncoding ?? paramValue
+        return decodedValue == value
+    }
+    
+    if !foundMatch {
+        let actualValues = matchingItems.compactMap { 
+            guard let val = $0.value else { return "nil" }
+            return val.removingPercentEncoding ?? val
+        }.joined(separator: ", ")
+        XCTFail("Query parameter '\(name)' found but value mismatch. Expected: '\(value)', Actual: '\(actualValues)'", file: file, line: line)
+    }
+}
+
+/// Asserts that a request contains a specific query parameter (regardless of value)
+public func HTTPAssertQueryParameterExists(
+    _ request: HTTPRequests.HTTPRequest,
+    name: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard let url = request.request.url,
+          let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+          let queryItems = components.queryItems else {
+        XCTFail("Request does not contain any query parameters", file: file, line: line)
+        return
+    }
+    
+    let exists = queryItems.contains { $0.name == name }
+    
+    if !exists {
+        let availableParams = queryItems.map { $0.name }.joined(separator: ", ")
+        XCTFail("Query parameter '\(name)' not found. Available parameters: \(availableParams)", file: file, line: line)
+    }
+}
+
+/// Asserts that a request does not contain a specific query parameter
+public func HTTPAssertQueryParameterNotExists(
+    _ request: HTTPRequests.HTTPRequest,
+    name: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard let url = request.request.url,
+          let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+          let queryItems = components.queryItems else {
+        // If there are no query parameters at all, the assertion passes
+        return
+    }
+    
+    let exists = queryItems.contains { $0.name == name }
+    
+    if exists {
+        XCTFail("Query parameter '\(name)' should not exist but was found", file: file, line: line)
+    }
+}
+
+/// Asserts that a request contains all specified query parameters with their expected values
+/// URL-encoded values are automatically decoded for comparison
+public func HTTPAssertQueryParameters(
+    _ request: HTTPRequests.HTTPRequest,
+    _ expectedParams: [String: String],
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    for (name, expectedValue) in expectedParams {
+        HTTPAssertQueryParameter(request, name: name, value: expectedValue, file: file, line: line)
+    }
+}
+
+
