@@ -119,8 +119,8 @@ jobs:
         cd Example/Demo
         if [ -d "TestResults.xcresult" ]; then
           echo "Test results found"
-          # Extract basic test information
-          xcrun xcresulttool get --format json --path TestResults.xcresult > test_summary.json
+          # Extract test results using the new API
+          xcrun xcresulttool get test-results summary --path TestResults.xcresult > test_summary.json
           cat test_summary.json
         else
           echo "No test results found"
