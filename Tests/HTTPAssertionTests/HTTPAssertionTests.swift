@@ -98,10 +98,10 @@ final class HTTPAssertionTests: XCTestCase {
         XCTAssertTrue(recentRequests.contains { $0.id == "test-3" })
         XCTAssertFalse(recentRequests.contains { $0.id == "test-1" })
         
-        // Test with limit and date filter
-        let limitedRecent = await HTTPRequests.recentRequests(limit: 1, since: midTime)
-        XCTAssertEqual(limitedRecent.count, 1)
-        XCTAssertEqual(limitedRecent.first?.id, "test-3") // Most recent first
+        // Test with date filter only
+        let filteredRecent = await HTTPRequests.recentRequests(since: midTime)
+        XCTAssertEqual(filteredRecent.count, 2)
+        XCTAssertEqual(filteredRecent.first?.id, "test-3") // Most recent first
         
         // Test recentRequests with request time sorting and date filter
         let byRequestTime = await HTTPRequests.recentRequests(sortBy: .requestTime, ascending: true, since: midTime)

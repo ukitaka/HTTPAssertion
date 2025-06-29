@@ -9,6 +9,7 @@ public func HTTPAssertRequested(
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
+    since: Date? = Date().addingTimeInterval(-30.0),
     timeout: TimeInterval = 5.0,
     file: StaticString = #filePath,
     line: UInt = #line
@@ -31,7 +32,7 @@ public func HTTPAssertRequested(
             let semaphore = DispatchSemaphore(value: 0)
             var result = false
             Task.detached {
-                let requests = await HTTPRequests.allRequests()
+                let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
                 result = requests.contains { matcher.matches($0) }
                 semaphore.signal()
             }
@@ -59,6 +60,7 @@ public func HTTPAssertNotRequested(
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
+    since: Date? = Date().addingTimeInterval(-30.0),
     timeout: TimeInterval = 2.0,
     file: StaticString = #filePath,
     line: UInt = #line
@@ -83,7 +85,7 @@ public func HTTPAssertNotRequested(
     let _ = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
     
     // After waiting, check that no matching request exists
-    let requests = await HTTPRequests.allRequests()
+    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
     let found = requests.contains { matcher.matches($0) }
     
     XCTAssertFalse(
@@ -100,7 +102,8 @@ public func HTTPRequests(
     urlPattern: String? = nil,
     method: String? = nil,
     headers: [String: String]? = nil,
-    queryParameters: [String: String]? = nil
+    queryParameters: [String: String]? = nil,
+    since: Date? = Date().addingTimeInterval(-30.0)
 ) async -> [HTTPRequests.HTTPRequest] {
     let matcher = HTTPRequestMatcher(
         url: url,
@@ -110,7 +113,7 @@ public func HTTPRequests(
         queryParameters: queryParameters
     )
     
-    let requests = await HTTPRequests.allRequests()
+    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
     return requests.filter { matcher.matches($0) }
 }
 
@@ -121,6 +124,7 @@ public func HTTPAssertRequestedOnce(
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
+    since: Date? = Date().addingTimeInterval(-30.0),
     timeout: TimeInterval = 5.0,
     file: StaticString = #filePath,
     line: UInt = #line
@@ -139,7 +143,7 @@ public func HTTPAssertRequestedOnce(
             let semaphore = DispatchSemaphore(value: 0)
             var matchingCount = 0
             Task.detached {
-                let requests = await HTTPRequests.allRequests()
+                let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
                 matchingCount = requests.filter { matcher.matches($0) }.count
                 semaphore.signal()
             }

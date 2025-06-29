@@ -44,10 +44,10 @@ public enum HTTPRequests {
         return loadedRequests.sorted { $0.timestamp < $1.timestamp }
     }
     
-    /// Gets stored requests with optional sorting, limit and date filtering
-    public static func recentRequests(limit: Int? = nil, sortBy: SortBy = .responseTime, ascending: Bool = false, since: Date? = nil) async -> [HTTPRequest] {
+    /// Gets stored requests with optional sorting and date filtering
+    public static func recentRequests(sortBy: SortBy = .responseTime, ascending: Bool = false, since: Date? = nil) async -> [HTTPRequest] {
         let storageSortKey: FileStorage.SortKey = sortBy == .requestTime ? .creationDate : .modificationDate
-        return await storage.loadSorted(HTTPRequest.self, limit: limit, sortBy: storageSortKey, ascending: ascending, since: since)
+        return await storage.loadSorted(HTTPRequest.self, sortBy: storageSortKey, ascending: ascending, since: since)
     }
 }
 

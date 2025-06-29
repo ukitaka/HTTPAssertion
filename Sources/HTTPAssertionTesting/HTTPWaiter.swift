@@ -12,6 +12,7 @@ public enum HTTPWaiter {
         method: String? = nil,
         headers: [String: String]? = nil,
         queryParameters: [String: String]? = nil,
+        since: Date? = Date().addingTimeInterval(-30.0),
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
@@ -30,7 +31,7 @@ public enum HTTPWaiter {
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: HTTPRequests.HTTPRequest? = nil
                 Task.detached {
-                    let requests = await HTTPRequests.recentRequests(limit: 100)
+                    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
                     foundRequest = requests.first { matcher.matches($0) && $0.response != nil }
                     semaphore.signal()
                 }
@@ -43,7 +44,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.recentRequests(limit: 100)
+            let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
             return requests.first { matcher.matches($0) && $0.response != nil }
         } else {
             XCTFail(
@@ -58,6 +59,7 @@ public enum HTTPWaiter {
     /// Waits for a specific recorded request to receive a response
     public static func waitForResponse(
         for recordedRequest: HTTPRequests.HTTPRequest,
+        since: Date? = Date().addingTimeInterval(-30.0),
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
@@ -70,7 +72,7 @@ public enum HTTPWaiter {
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: HTTPRequests.HTTPRequest? = nil
                 Task.detached {
-                    let requests = await HTTPRequests.recentRequests(limit: 100)
+                    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
                     foundRequest = requests.first { $0.id == requestID && $0.response != nil }
                     semaphore.signal()
                 }
@@ -83,7 +85,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.recentRequests(limit: 100)
+            let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
             return requests.first { $0.id == requestID && $0.response != nil }
         } else {
             XCTFail(
@@ -102,6 +104,7 @@ public enum HTTPWaiter {
         method: String? = nil,
         headers: [String: String]? = nil,
         queryParameters: [String: String]? = nil,
+        since: Date? = Date().addingTimeInterval(-30.0),
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
@@ -120,7 +123,7 @@ public enum HTTPWaiter {
                 let semaphore = DispatchSemaphore(value: 0)
                 var foundRequest: HTTPRequests.HTTPRequest? = nil
                 Task.detached {
-                    let requests = await HTTPRequests.recentRequests(limit: 100)
+                    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
                     foundRequest = requests.first { matcher.matches($0) }
                     semaphore.signal()
                 }
@@ -133,7 +136,7 @@ public enum HTTPWaiter {
         let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.recentRequests(limit: 100)
+            let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
             return requests.first { matcher.matches($0) }
         } else {
             XCTFail(
