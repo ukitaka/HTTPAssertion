@@ -2,11 +2,13 @@ import Foundation
 import XCTest
 import HTTPAssertionLogging
 
-/// Namespace for wait-related HTTP testing methods
-public enum HTTPWaiter {
+/// XCTestCase extensions for HTTP assertion wait methods
+public extension XCTestCase {
+    
+    // MARK: - HTTP Request Wait Methods
     
     /// Waits for a request matching the given criteria to receive a response
-    public static func waitForResponse(
+    func waitForResponse(
         url: String? = nil,
         urlPattern: String? = nil,
         method: String? = nil,
@@ -57,7 +59,7 @@ public enum HTTPWaiter {
     }
     
     /// Waits for a specific recorded request to receive a response
-    public static func waitForResponse(
+    func waitForResponse(
         for recordedRequest: HTTPRequests.HTTPRequest,
         since: Date? = Date().addingTimeInterval(-30.0),
         timeout: TimeInterval = 10.0,
@@ -98,7 +100,7 @@ public enum HTTPWaiter {
     }
     
     /// Waits for a request matching the given criteria to be fired, regardless of response status
-    public static func waitForRequest(
+    func waitForRequest(
         url: String? = nil,
         urlPattern: String? = nil,
         method: String? = nil,
@@ -146,5 +148,72 @@ public enum HTTPWaiter {
             )
             return nil
         }
+    }
+    
+    // MARK: - Context Wait Methods
+    
+    /// Waits for a context value to become available or change
+    @available(macOS 13.3, iOS 16.4, *)
+    func waitForContext<T: Codable & Sendable & Equatable>(
+        _ type: T.Type,
+        forKey key: String,
+        expectedValue: T? = nil,
+        app: XCUIApplication,
+        timeout: TimeInterval = 10.0
+    ) async throws -> T? {
+        let startTime = Date()
+        
+        while Date().timeIntervalSince(startTime) < timeout {
+            // Request context update
+            try await Context.requestUpdate(app: app)
+            
+            // Try to get the context
+            if let value = try await Context.retrieve(type, forKey: key) {
+                if let expected = expectedValue {
+                    if value == expected {
+                        return value
+                    }
+                } else {
+                    return value
+                }
+            }
+            
+            // Wait before retrying
+            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        }
+        
+        return nil
+    }
+    
+    /// Waits for a dictionary context to become available or change
+    @available(macOS 13.3, iOS 16.4, *)
+    func waitForContext(
+        forKey key: String,
+        expectedValue: [String: String]? = nil,
+        app: XCUIApplication,
+        timeout: TimeInterval = 10.0
+    ) async throws -> [String: String]? {
+        let startTime = Date()
+        
+        while Date().timeIntervalSince(startTime) < timeout {
+            // Request context update
+            try await Context.requestUpdate(app: app)
+            
+            // Try to get the context
+            if let value = try await Context.retrieve(forKey: key) {
+                if let expected = expectedValue {
+                    if value == expected {
+                        return value
+                    }
+                } else {
+                    return value
+                }
+            }
+            
+            // Wait before retrying
+            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        }
+        
+        return nil
     }
 }

@@ -83,7 +83,7 @@ final class DemoUITests: XCTestCase {
         XCTAssertEqual(googleRequests.count, 1, "Should have exactly one Google search request")
         
         // Test waiting for response using URL criteria
-        if let githubResponse = await HTTPWaiter.waitForResponse(url: "https://api.github.com/zen") {
+        if let githubResponse = await waitForResponse(url: "https://api.github.com/zen") {
             XCTAssertNotNil(githubResponse.response, "GitHub request should have received a response")
             XCTAssertEqual(githubResponse.response?.statusCode, 200, "GitHub API should return 200")
         }
@@ -91,7 +91,7 @@ final class DemoUITests: XCTestCase {
         // Test waiting for response using specific RecordedHTTPRequest
         let httpbinRequests = await HTTPRequests(url: "https://httpbin.org/uuid")
         if let httpbinRequest = httpbinRequests.first {
-            if let httpbinResponse = await HTTPWaiter.waitForResponse(for: httpbinRequest) {
+            if let httpbinResponse = await waitForResponse(for: httpbinRequest) {
                 XCTAssertNotNil(httpbinResponse.response, "HTTPBin request should have received a response")
                 XCTAssertEqual(httpbinResponse.response?.statusCode, 200, "HTTPBin API should return 200")
             }
