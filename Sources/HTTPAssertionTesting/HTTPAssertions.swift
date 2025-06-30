@@ -320,12 +320,17 @@ public func HTTPPerformActionAndAssertResponse(
 /// Asserts that a request contains a specific query parameter with the expected value
 /// URL-encoded values are automatically decoded for comparison
 public func HTTPAssertQueryParameter(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     name: String,
     value: String,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
+    guard let request = request else {
+        XCTFail("Request is nil", file: file, line: line)
+        return
+    }
+    
     guard let url = request.request.url,
           let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
           let queryItems = components.queryItems else {
@@ -360,11 +365,16 @@ public func HTTPAssertQueryParameter(
 
 /// Asserts that a request contains a specific query parameter (regardless of value)
 public func HTTPAssertQueryParameterExists(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     name: String,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
+    guard let request = request else {
+        XCTFail("Request is nil", file: file, line: line)
+        return
+    }
+    
     guard let url = request.request.url,
           let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
           let queryItems = components.queryItems else {
@@ -382,11 +392,16 @@ public func HTTPAssertQueryParameterExists(
 
 /// Asserts that a request does not contain a specific query parameter
 public func HTTPAssertQueryParameterNotExists(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     name: String,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
+    guard let request = request else {
+        XCTFail("Request is nil", file: file, line: line)
+        return
+    }
+    
     guard let url = request.request.url,
           let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
           let queryItems = components.queryItems else {
@@ -404,7 +419,7 @@ public func HTTPAssertQueryParameterNotExists(
 /// Asserts that a request contains all specified query parameters with their expected values
 /// URL-encoded values are automatically decoded for comparison
 public func HTTPAssertQueryParameters(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     _ expectedParams: [String: String],
     file: StaticString = #filePath,
     line: UInt = #line
@@ -418,12 +433,17 @@ public func HTTPAssertQueryParameters(
 /// This is useful for testing negative cases where you want to ensure a parameter doesn't have a specific value
 /// URL-encoded values are automatically decoded for comparison
 public func HTTPAssertQueryParameterNotEqual(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     name: String,
     value: String,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
+    guard let request = request else {
+        XCTFail("Request is nil", file: file, line: line)
+        return
+    }
+    
     guard let url = request.request.url,
           let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
           let queryItems = components.queryItems else {
@@ -456,12 +476,17 @@ public func HTTPAssertQueryParameterNotEqual(
 /// Asserts that a request contains a specific header with the expected value
 /// Header names are case-insensitive
 public func HTTPAssertHeader(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     name: String,
     value: String,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
+    guard let request = request else {
+        XCTFail("Request is nil", file: file, line: line)
+        return
+    }
+    
     guard let headers = request.request.allHTTPHeaderFields else {
         XCTFail("Request does not contain any headers", file: file, line: line)
         return
@@ -486,11 +511,16 @@ public func HTTPAssertHeader(
 /// Asserts that a request contains a specific header (regardless of value)
 /// Header names are case-insensitive
 public func HTTPAssertHeaderExists(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     name: String,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
+    guard let request = request else {
+        XCTFail("Request is nil", file: file, line: line)
+        return
+    }
+    
     guard let headers = request.request.allHTTPHeaderFields else {
         XCTFail("Request does not contain any headers", file: file, line: line)
         return
@@ -509,11 +539,16 @@ public func HTTPAssertHeaderExists(
 /// Asserts that a request does not contain a specific header
 /// Header names are case-insensitive
 public func HTTPAssertHeaderNotExists(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     name: String,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
+    guard let request = request else {
+        XCTFail("Request is nil", file: file, line: line)
+        return
+    }
+    
     guard let headers = request.request.allHTTPHeaderFields else {
         // If there are no headers at all, the assertion passes
         return
@@ -531,7 +566,7 @@ public func HTTPAssertHeaderNotExists(
 /// Asserts that a request contains all specified headers with their expected values
 /// Header names are case-insensitive
 public func HTTPAssertHeaders(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     _ expectedHeaders: [String: String],
     file: StaticString = #filePath,
     line: UInt = #line
@@ -545,12 +580,17 @@ public func HTTPAssertHeaders(
 /// This is useful for testing negative cases where you want to ensure a header doesn't have a specific value
 /// Header names are case-insensitive
 public func HTTPAssertHeaderNotEqual(
-    _ request: HTTPRequests.HTTPRequest,
+    _ request: HTTPRequests.HTTPRequest?,
     name: String,
     value: String,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
+    guard let request = request else {
+        XCTFail("Request is nil", file: file, line: line)
+        return
+    }
+    
     guard let headers = request.request.allHTTPHeaderFields else {
         // If there are no headers at all, the assertion passes
         return
