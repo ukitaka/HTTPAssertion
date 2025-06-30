@@ -111,7 +111,7 @@ class MyAppUITests: XCTestCase {
         HTTPAssertRequested("https://analytics.example.com/event")
     }
     
-    func testLoginRequest() throws {
+    func testLoginRequest() async throws {
         let app = XCUIApplication()
         app.launch()
         
@@ -122,7 +122,7 @@ class MyAppUITests: XCTestCase {
         app.buttons["Login"].tap()
         
         // Wait for and assert login request
-        waitForRequest(
+        await waitForRequest(
             url: "https://api.example.com/login",
             method: "POST",
             timeout: 5.0
@@ -205,13 +205,13 @@ HTTPAssertRequested(urlPattern: "https://api\\.example\\.com/users/\\d+")
 
 ```swift
 // Wait for a request to be made
-waitForRequest("https://api.example.com/data", timeout: 10.0)
+await waitForRequest("https://api.example.com/data", timeout: 10.0)
 
-// Wait for a response to be received
-waitForResponse("https://api.example.com/data", timeout: 10.0)
+// Wait for a response to be received  
+await waitForResponse("https://api.example.com/data", timeout: 10.0)
 
 // Wait with custom conditions
-waitForRequest(
+await waitForRequest(
     urlPattern: "https://api\\.example\\.com/analytics.*",
     method: "POST",
     timeout: 5.0
