@@ -26,6 +26,7 @@ public extension XCTestCase {
     // MARK: - HTTP Request Wait Methods
     
     /// Waits for a request matching the given criteria to receive a response
+    @discardableResult
     func waitForResponse(
         url: String? = nil,
         urlPattern: String? = nil,
@@ -77,6 +78,7 @@ public extension XCTestCase {
     }
     
     /// Waits for a specific recorded request to receive a response
+    @discardableResult
     func waitForResponse(
         for recordedRequest: HTTPRequests.HTTPRequest,
         since: Date? = Date().addingTimeInterval(-30.0),
@@ -118,6 +120,7 @@ public extension XCTestCase {
     }
     
     /// Waits for a request matching the given criteria to be fired, regardless of response status
+    @discardableResult
     func waitForRequest(
         url: String? = nil,
         urlPattern: String? = nil,
@@ -171,6 +174,7 @@ public extension XCTestCase {
     // MARK: - Context Wait Methods
     
     /// Waits for a context value to be updated or become available
+    @discardableResult
     func waitForContextUpdate<T: Codable & Sendable>(
         forKey key: String,
         since: Date = Date.now,
