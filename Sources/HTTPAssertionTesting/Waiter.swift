@@ -30,6 +30,8 @@ public extension XCTestCase {
     func waitForResponse(
         url: String? = nil,
         urlPattern: String? = nil,
+        host: String? = nil,
+        relativePath: String? = nil,
         method: String? = nil,
         headers: [String: String]? = nil,
         queryParameters: [String: String]? = nil,
@@ -41,6 +43,8 @@ public extension XCTestCase {
         let matcher = HTTPRequestMatcher(
             url: url,
             urlPattern: urlPattern,
+            host: host,
+            relativePath: relativePath,
             method: method,
             headers: headers,
             queryParameters: queryParameters
@@ -124,6 +128,8 @@ public extension XCTestCase {
     func waitForRequest(
         url: String? = nil,
         urlPattern: String? = nil,
+        host: String? = nil,
+        relativePath: String? = nil,
         method: String? = nil,
         headers: [String: String]? = nil,
         queryParameters: [String: String]? = nil,
@@ -135,6 +141,8 @@ public extension XCTestCase {
         let matcher = HTTPRequestMatcher(
             url: url,
             urlPattern: urlPattern,
+            host: host,
+            relativePath: relativePath,
             method: method,
             headers: headers,
             queryParameters: queryParameters

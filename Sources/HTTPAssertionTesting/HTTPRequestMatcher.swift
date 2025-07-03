@@ -5,6 +5,8 @@ import HTTPAssertionLogging
 struct HTTPRequestMatcher {
     let url: String?
     let urlPattern: String?
+    let host: String?
+    let relativePath: String?
     let method: String?
     let headers: [String: String]?
     let queryParameters: [String: String]?
@@ -13,6 +15,8 @@ struct HTTPRequestMatcher {
         var parts: [String] = []
         if let url = url { parts.append("url=\(url)") }
         if let urlPattern = urlPattern { parts.append("urlPattern=\(urlPattern)") }
+        if let host = host { parts.append("host=\(host)") }
+        if let relativePath = relativePath { parts.append("relativePath=\(relativePath)") }
         if let method = method { parts.append("method=\(method)") }
         if let headers = headers { parts.append("headers=\(headers)") }
         if let queryParameters = queryParameters { parts.append("queryParameters=\(queryParameters)") }
@@ -31,6 +35,16 @@ struct HTTPRequestMatcher {
                   requestURL.range(of: urlPattern, options: .regularExpression) != nil else {
                 return false
             }
+        }
+        
+        // Check host
+        if let host = host {
+            guard request.request.url?.host == host else { return false }
+        }
+        
+        // Check relative path
+        if let relativePath = relativePath {
+            guard request.request.url?.path == relativePath else { return false }
         }
         
         // Check method

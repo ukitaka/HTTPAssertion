@@ -6,6 +6,8 @@ import HTTPAssertionLogging
 public func HTTPAssertRequested(
     url: String? = nil,
     urlPattern: String? = nil,
+    host: String? = nil,
+    relativePath: String? = nil,
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
@@ -17,6 +19,8 @@ public func HTTPAssertRequested(
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,
+        host: host,
+        relativePath: relativePath,
         method: method,
         headers: headers,
         queryParameters: queryParameters
@@ -57,6 +61,8 @@ public func HTTPAssertRequested(
 public func HTTPAssertNotRequested(
     url: String? = nil,
     urlPattern: String? = nil,
+    host: String? = nil,
+    relativePath: String? = nil,
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
@@ -68,6 +74,8 @@ public func HTTPAssertNotRequested(
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,
+        host: host,
+        relativePath: relativePath,
         method: method,
         headers: headers,
         queryParameters: queryParameters
@@ -100,6 +108,8 @@ public func HTTPAssertNotRequested(
 public func HTTPRequests(
     url: String? = nil,
     urlPattern: String? = nil,
+    host: String? = nil,
+    relativePath: String? = nil,
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
@@ -108,6 +118,8 @@ public func HTTPRequests(
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,
+        host: host,
+        relativePath: relativePath,
         method: method,
         headers: headers,
         queryParameters: queryParameters
@@ -121,6 +133,8 @@ public func HTTPRequests(
 public func HTTPAssertRequestedOnce(
     url: String? = nil,
     urlPattern: String? = nil,
+    host: String? = nil,
+    relativePath: String? = nil,
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
@@ -132,6 +146,8 @@ public func HTTPAssertRequestedOnce(
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,
+        host: host,
+        relativePath: relativePath,
         method: method,
         headers: headers,
         queryParameters: queryParameters
@@ -170,6 +186,8 @@ public func HTTPAssertRequestedOnce(
 public func HTTPPerformActionAndAssertRequested(
     url: String? = nil,
     urlPattern: String? = nil,
+    host: String? = nil,
+    relativePath: String? = nil,
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
@@ -187,6 +205,8 @@ public func HTTPPerformActionAndAssertRequested(
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,
+        host: host,
+        relativePath: relativePath,
         method: method,
         headers: headers,
         queryParameters: queryParameters
@@ -227,6 +247,8 @@ public func HTTPPerformActionAndAssertRequested(
 public func HTTPPerformActionAndAssertResponse(
     url: String? = nil,
     urlPattern: String? = nil,
+    host: String? = nil,
+    relativePath: String? = nil,
     method: String? = nil,
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
@@ -245,6 +267,8 @@ public func HTTPPerformActionAndAssertResponse(
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,
+        host: host,
+        relativePath: relativePath,
         method: method,
         headers: headers,
         queryParameters: queryParameters
