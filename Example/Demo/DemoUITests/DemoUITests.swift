@@ -39,20 +39,9 @@ final class DemoUITests: XCTestCase {
         )
         XCTAssertNotNil(googleRequest, "Google search request should be fired")
         
-        // 2. Call GitHub API and wait for response
-//        let githubButton = app.buttons["Call GitHub API"]
-//        githubButton.tap()
-//        
-//        // Wait for GitHub API response
-//        let githubResponse = await waitForResponse(
-//            url: "https://api.github.com/zen",
-//            method: "GET",
-//            timeout: 5.0
-//        )
-//        XCTAssertNotNil(githubResponse, "GitHub API should respond")
-//        HTTPAssertResponseStatus(githubResponse, statusCode: 200, "GitHub API should return 200 status")
+        // 2. Call HTTPBin API and wait for response
         
-        // 3. Call HTTPBin API and wait for response
+        // 2. Call HTTPBin API and wait for response
         let httpbinButton = app.buttons["Call HTTPBin API"]
         httpbinButton.tap()
         
@@ -65,7 +54,7 @@ final class DemoUITests: XCTestCase {
         XCTAssertNotNil(httpbinResponse, "HTTPBin API should respond")
         HTTPAssertResponseStatus(httpbinResponse, statusCode: 200, "HTTPBin API should return 200 status")
         
-        // 4. Call JSONPlaceholder API and wait for response
+        // 3. Call JSONPlaceholder API and wait for response
         let jsonButton = app.buttons["Call JSONPlaceholder API"]
         jsonButton.tap()
         
@@ -168,26 +157,9 @@ final class DemoUITests: XCTestCase {
             XCTAssertTrue(request.request.url?.query?.contains("SwiftTesting") == true)
         }
         
-        // Example 2: Perform action and wait for response
-//        try await performActionAndAssertResponse(
-//            url: "https://api.github.com/zen",
-//            method: "GET"
-//        ) {
-//            // Action: Call GitHub API
-//            let githubButton = app.buttons["Call GitHub API"]
-//            githubButton.tap()
-//        } onRequested: { request in
-//            // Called when request is fired
-//            print("GitHub API request fired")
-//            XCTAssertEqual(request.request.httpMethod, "GET")
-//        } onResponse: { request in
-//            // Called when response is received
-//            print("GitHub API response received")
-//            XCTAssertNotNil(request.response)
-//            HTTPAssertResponseStatus(request, statusCode: 200, "Response should return 200 status")
-//        }
+        // Example 2: Multiple actions with different APIs
         
-        // Example 3: Multiple actions with different APIs
+        // Example 2: Multiple actions with different APIs
         try await performActionAndAssertRequested(
             urlPattern: "https://httpbin.org/get*",
             method: "GET",
@@ -205,37 +177,7 @@ final class DemoUITests: XCTestCase {
     func testHeaderAndQueryParameterAssertions() async throws {
         // Test header and query parameter assertions with various API calls
         
-        // 1. Test GitHub API with custom headers
-        try await performActionAndAssertRequested(
-            url: "https://api.github.com/zen",
-            method: "GET",
-            "GitHub Zen API request should be fired with correct headers"
-        ) {
-            let githubButton = app.buttons["Call GitHub API"]
-            githubButton.tap()
-        } onRequested: { request in
-            // Test header assertions
-            HTTPAssertHeader(request, name: "Accept", value: "application/json")
-            HTTPAssertHeader(request, name: "User-Agent", value: "HTTPAssertion-Demo/1.0")
-            
-            // Test header existence
-            HTTPAssertHeaderExists(request, name: "Accept")
-            HTTPAssertHeaderExists(request, name: "User-Agent")
-            
-            // Test headers that should not exist
-            HTTPAssertHeaderNotExists(request, name: "Cookie")
-            HTTPAssertHeaderNotExists(request, name: "X-API-Key")
-            
-            // Test header case-insensitivity
-            HTTPAssertHeader(request, name: "accept", value: "application/json")
-            HTTPAssertHeader(request, name: "USER-AGENT", value: "HTTPAssertion-Demo/1.0")
-            
-            // Test negative header assertions
-            HTTPAssertHeaderNotEqual(request, name: "Accept", value: "text/html")
-            HTTPAssertHeaderNotEqual(request, name: "User-Agent", value: "Mozilla/5.0")
-        }
-        
-        // 2. Test HTTPBin API with query parameters and headers
+        // 1. Test HTTPBin API with query parameters and headers
         try await performActionAndAssertRequested(
             urlPattern: "https://httpbin.org/get*",
             method: "GET",
@@ -282,7 +224,7 @@ final class DemoUITests: XCTestCase {
             ])
         }
         
-        // 3. Test JSONPlaceholder API with multiple query parameters
+        // 2. Test JSONPlaceholder API with multiple query parameters
         try await performActionAndAssertRequested(
             urlPattern: ".*jsonplaceholder\\.typicode\\.com/posts.*",
             method: "GET",
@@ -317,7 +259,7 @@ final class DemoUITests: XCTestCase {
             HTTPAssertHeader(request, name: "Accept-Language", value: "en-US")
         }
         
-        // 4. Test Google search with query parameters (URL encoded)
+        // 3. Test Google search with query parameters (URL encoded)
         try await performActionAndAssertRequested(
             urlPattern: ".*google\\.com/search.*",
             method: "GET",

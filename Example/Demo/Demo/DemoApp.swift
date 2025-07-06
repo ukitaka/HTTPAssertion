@@ -6,7 +6,7 @@ struct DemoApp: App {
     init() {
         #if DEBUG
         HTTPAssertionLogging.start(
-            allowedHosts: ["*.github.com", "httpbin.org", "*.typicode.com", "*.google.com"],
+            allowedHosts: ["httpbin.org", "*.typicode.com", "*.google.com"],
             contextUpdateInterval: 2.0
         ) {
             // Update user context with current state

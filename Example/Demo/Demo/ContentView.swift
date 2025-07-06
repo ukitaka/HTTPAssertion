@@ -30,11 +30,6 @@ struct ContentView: View {
             .buttonStyle(.borderedProminent)
             .disabled(searchQuery.isEmpty || isLoading)
             
-            Button(action: performGitHubAPICall) {
-                Text("Call GitHub API")
-            }
-            .buttonStyle(.bordered)
-            
             Button(action: performHttpBinAPICall) {
                 Text("Call HTTPBin API")
             }
@@ -73,21 +68,6 @@ struct ContentView: View {
             DispatchQueue.main.async {
                 self.isLoading = false
                 self.lastRequestInfo = "Google search: \(searchQuery)"
-            }
-        }
-        task.resume()
-    }
-    
-    private func performGitHubAPICall() {
-        guard let url = URL(string: "https://api.github.com/zen") else { return }
-        
-        var request = URLRequest(url: url)
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("HTTPAssertion-Demo/1.0", forHTTPHeaderField: "User-Agent")
-        
-        let task = URLSession.shared.dataTask(with: request) { _, _, _ in
-            DispatchQueue.main.async {
-                self.lastRequestInfo = "GitHub API call"
             }
         }
         task.resume()
