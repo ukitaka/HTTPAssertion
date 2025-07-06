@@ -303,6 +303,33 @@ await waitForRequest(
 )
 ```
 
+#### XCTAttachment Support
+
+Create XCTAttachment from HTTP requests for detailed test reporting:
+
+```swift
+// Attach HTTP request to test report
+func testAPIWithAttachment() async throws {
+    let app = XCUIApplication()
+    app.launch()
+    
+    // Perform action that triggers HTTP request
+    app.buttons["Fetch Data"].tap()
+    
+    // Wait for response
+    let response = await waitForResponse(
+        url: "https://api.example.com/data",
+        timeout: 5.0
+    )
+    
+    // Create and add attachment
+    if let request = response {
+        let attachment = try XCTAttachment(httpRequest: request)
+        add(attachment)
+    }
+}
+```
+
 #### Perform Action and Assert Request
 
 Combine UI actions with HTTP request assertions in a single call:

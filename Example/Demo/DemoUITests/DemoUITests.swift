@@ -383,6 +383,28 @@ final class DemoUITests: XCTestCase {
             "DELETE requests should not be made in this demo app"
         )
     }
+    
+    @MainActor
+    func testXCTAttachmentSupport() async throws {
+        // Make a simple HTTP request
+        let httpbinButton = app.buttons["Call HTTPBin API"]
+        httpbinButton.tap()
+        
+        // Wait for the response to complete
+        let httpbinResponse = await waitForResponse(
+            urlPattern: "https://httpbin.org/get*",
+            method: "GET",
+            timeout: 5.0
+        )
+        
+        XCTAssertNotNil(httpbinResponse, "HTTPBin response should be received")
+        
+        // Create XCTAttachment from the request and add it
+        if let request = httpbinResponse {
+            let attachment = try XCTAttachment(httpRequest: request)
+            add(attachment)
+        }
+    }
 }
 
 extension XCUIElement {
