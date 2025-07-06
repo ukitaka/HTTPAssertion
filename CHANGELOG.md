@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-07-06
+
+### Added
+- Custom failure message support for all assertion methods using `@autoclosure () -> String` parameter
+- HTTP response status code assertions with `HTTPAssertResponseStatus`
+- `host` and `relativePath` parameters for more flexible URL matching
+- XCTestCase extension methods: `performActionAndAssertRequested` and `performActionAndAssertResponse`
+- Improved GitHub Actions workflows with reusable components
+
+### Changed
+- Assertion methods now support custom failure messages following XCTest patterns
+- Convenience methods moved to XCTestCase extensions for better Swift API design
+- Refactored `performActionAndAssertResponse` to use `waitForResponse` internally
+- Simplified GitHub Actions workflow structure to eliminate code duplication
+
+### Removed
+- GitHub API calls from Demo app and UI tests to ensure reliable CI execution
+
+### Documentation
+- Added comprehensive CI/CD strategy documentation to CLAUDE.md
+- Updated README.md with custom message examples for all assertion methods
+- Enhanced API documentation with response status assertion examples
+
 ## [1.1.0] - 2025-06-30
 
 ### Added
@@ -55,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Convenience Methods**: `HTTPPerformActionAndAssertRequested` for combined UI actions and assertions
 - **AllowedHosts Support**: Configure which hosts should be logged
 
-[1.1.0]: https://github.com/ukitaka/HTTPAssertion/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/ukitaka/HTTPAssertion/compare/v0.1.0...v1.0.0
-[0.1.0]: https://github.com/ukitaka/HTTPAssertion/releases/tag/v0.1.0
+[1.2.0]: https://github.com/ukitaka/HTTPAssertion/compare/1.1.0...1.2.0
+[1.1.0]: https://github.com/ukitaka/HTTPAssertion/compare/1.0.0...1.1.0
+[1.0.0]: https://github.com/ukitaka/HTTPAssertion/compare/0.1.0...1.0.0
+[0.1.0]: https://github.com/ukitaka/HTTPAssertion/releases/tag/0.1.0

@@ -11,7 +11,9 @@ HTTPAssertion is a Swift package that enables HTTP request assertion capabilitie
 - 🔍 **HTTP Request Logging**: Automatically intercepts and logs all HTTP requests made by your app
 - ✅ **Flexible Assertions**: Assert requests by URL, HTTP method, headers, query parameters, and more
 - 💬 **Custom Failure Messages**: Support for custom failure messages in all assertion methods, just like XCTest
+- 📊 **Response Status Assertions**: Verify HTTP response status codes (200, 404, 500, etc.)
 - ⏱️ **Wait for Requests**: Built-in waiting functionality for asynchronous request verification
+- 🎯 **Host & Path Matching**: Flexible URL matching with separate host and relative path parameters
 - 📱 **Cross-Process Communication**: Seamless data sharing between app and test processes
 - 🧪 **XCUITest Integration**: Designed specifically for XCUITest workflows
 - 🚀 **Swift Concurrency**: Built with modern Swift concurrency features
@@ -31,7 +33,7 @@ Add HTTPAssertion to your project using Swift Package Manager:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ukitaka/HTTPAssertion.git", from: "0.1.0")
+    .package(url: "https://github.com/ukitaka/HTTPAssertion.git", from: "1.2.0")
 ]
 ```
 
@@ -243,6 +245,22 @@ HTTPAssertRequested(
 HTTPAssertRequested(
     urlPattern: "https://api\\.example\\.com/users/\\d+",
     "User API should be called with numeric user ID"
+)
+
+// Match by host and relative path for flexible URL matching
+HTTPAssertRequested(
+    host: "api.example.com",
+    relativePath: "/users/profile",
+    "Profile API should be called on the correct host"
+)
+
+// Combine host and relative path with other parameters
+HTTPAssertRequested(
+    host: "api.example.com", 
+    relativePath: "/search",
+    method: "GET",
+    queryParameters: ["q": "swift"],
+    "Search API should be called with proper parameters"
 )
 ```
 
