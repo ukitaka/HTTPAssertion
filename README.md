@@ -33,7 +33,7 @@ Add HTTPAssertion to your project using Swift Package Manager:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ukitaka/HTTPAssertion.git", from: "1.2.0")
+    .package(url: "https://github.com/ukitaka/HTTPAssertion.git", from: "1.3.0")
 ]
 ```
 
