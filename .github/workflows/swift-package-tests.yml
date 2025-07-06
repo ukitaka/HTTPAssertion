@@ -1,0 +1,47 @@
+name: Swift Package Tests
+
+on:
+  workflow_call:
+    inputs:
+      timeout_minutes:
+        description: 'Timeout for test execution in minutes'
+        required: false
+        type: number
+        default: 10
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+
+jobs:
+  swift-package-tests:
+    name: Swift Package Tests
+    runs-on: macos-15
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Select Xcode version
+      run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+    
+    - name: Cache Swift dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          .build
+          ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-swift-${{ hashFiles('Package.swift') }}
+        restore-keys: |
+          ${{ runner.os }}-swift-
+    
+    - name: Show Xcode version
+      run: xcodebuild -version
+    
+    - name: Show Swift version
+      run: swift --version
+    
+    - name: Build Swift Package
+      run: swift build --verbose
+    
+    - name: Run Swift Package Tests
+      run: swift test --verbose
+      timeout-minutes: ${{ inputs.timeout_minutes }}

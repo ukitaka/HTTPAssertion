@@ -1,0 +1,124 @@
+name: Demo App Tests
+
+on:
+  workflow_call:
+    inputs:
+      build_timeout_minutes:
+        description: 'Timeout for build in minutes'
+        required: false
+        type: number
+        default: 15
+      test_timeout_minutes:
+        description: 'Timeout for tests in minutes'
+        required: false
+        type: number
+        default: 20
+      continue_on_test_error:
+        description: 'Continue workflow even if tests fail'
+        required: false
+        type: boolean
+        default: true
+      run_tests:
+        description: 'Whether to run UI tests or just build'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+
+jobs:
+  demo-app-tests:
+    name: Demo App Tests
+    runs-on: macos-15
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Select Xcode version
+      run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+    
+    - name: Cache Xcode dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          Example/Demo/.build
+          ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-xcode-demo-${{ hashFiles('Example/Demo/Demo.xcodeproj/project.pbxproj') }}
+        restore-keys: |
+          ${{ runner.os }}-xcode-demo-
+    
+    - name: List available simulators
+      run: xcrun simctl list devices available
+    
+    - name: Boot iOS Simulator
+      run: |
+        SIMULATOR_ID=$(xcrun simctl list devices available | grep "iPhone 16" | head -1 | grep -o '[A-Z0-9-]\{36\}')
+        echo "Booting simulator: $SIMULATOR_ID"
+        xcrun simctl boot $SIMULATOR_ID
+        echo "SIMULATOR_ID=$SIMULATOR_ID" >> $GITHUB_ENV
+        
+        # Disable hardware keyboard to prevent typing issues in UI tests
+        defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool NO
+    
+    - name: Wait for simulator to boot
+      run: |
+        MAX_WAIT=60
+        COUNTER=0
+        while ! xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -q "Booted"; do
+          if [ $COUNTER -ge $MAX_WAIT ]; then
+            echo "Timeout waiting for simulator to boot"
+            exit 1
+          fi
+          sleep 1
+          COUNTER=$((COUNTER + 1))
+        done
+        echo "Simulator booted successfully"
+    
+    - name: Build Demo App for Testing
+      run: |
+        cd Example/Demo
+        xcodebuild build-for-testing \
+          -scheme Demo \
+          -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+          -derivedDataPath DerivedData \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+      timeout-minutes: ${{ inputs.build_timeout_minutes }}
+    
+    - name: Run Demo UI Tests
+      if: ${{ inputs.run_tests }}
+      run: |
+        cd Example/Demo
+        xcodebuild test-without-building \
+          -scheme Demo \
+          -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+          -derivedDataPath DerivedData \
+          -only-testing:DemoUITests \
+          -resultBundlePath TestResults.xcresult \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+      timeout-minutes: ${{ inputs.test_timeout_minutes }}
+      continue-on-error: ${{ inputs.continue_on_test_error }}
+    
+    - name: Upload test results
+      if: always() && inputs.run_tests
+      uses: actions/upload-artifact@v4
+      with:
+        name: demo-ui-test-results-${{ github.run_id }}
+        path: Example/Demo/TestResults.xcresult
+        retention-days: 7
+    
+    - name: Check test results
+      if: ${{ inputs.run_tests }}
+      run: |
+        cd Example/Demo
+        if [ -d "TestResults.xcresult" ]; then
+          echo "Test results found"
+          # Extract test results using the new API
+          xcrun xcresulttool get test-results summary --path TestResults.xcresult > test_summary.json
+          cat test_summary.json
+        else
+          echo "No test results found"
+          exit 1
+        fi
