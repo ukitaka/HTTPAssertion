@@ -10,6 +10,7 @@ HTTPAssertion is a Swift package that enables HTTP request assertion capabilitie
 
 - 🔍 **HTTP Request Logging**: Automatically intercepts and logs all HTTP requests made by your app
 - ✅ **Flexible Assertions**: Assert requests by URL, HTTP method, headers, query parameters, and more
+- 💬 **Custom Failure Messages**: Support for custom failure messages in all assertion methods, just like XCTest
 - ⏱️ **Wait for Requests**: Built-in waiting functionality for asynchronous request verification
 - 📱 **Cross-Process Communication**: Seamless data sharing between app and test processes
 - 🧪 **XCUITest Integration**: Designed specifically for XCUITest workflows
@@ -109,6 +110,12 @@ class MyAppUITests: XCTestCase {
         
         // Assert that the expected HTTP request was made
         HTTPAssertRequested("https://analytics.example.com/event")
+        
+        // Or with a custom failure message
+        HTTPAssertRequested(
+            "https://analytics.example.com/event",
+            "Analytics event should be sent when search button is tapped"
+        )
     }
     
     func testLoginRequest() async throws {
@@ -128,7 +135,10 @@ class MyAppUITests: XCTestCase {
             timeout: 5.0
         )
         
-        HTTPAssertRequestedOnce("https://api.example.com/login")
+        HTTPAssertRequestedOnce(
+            "https://api.example.com/login",
+            "Login API should be called exactly once"
+        )
     }
 }
 ```
@@ -169,46 +179,70 @@ let userId: String? = Context.retrieve("user_id")
 // Assert that a request was made
 HTTPAssertRequested("https://api.example.com/data")
 
+// Assert with custom failure message
+HTTPAssertRequested(
+    "https://api.example.com/data",
+    "Data API should be called during app startup"
+)
+
 // Assert that a request was NOT made
-HTTPAssertNotRequested("https://api.example.com/sensitive")
+await HTTPAssertNotRequested("https://api.example.com/sensitive")
+
+// Assert with custom message for not requested
+await HTTPAssertNotRequested(
+    "https://api.example.com/sensitive",
+    "Sensitive API should never be called in this test scenario"
+)
 
 // Assert that a request was made exactly once
-HTTPAssertRequestedOnce("https://api.example.com/analytics")
+HTTPAssertRequestedOnce(
+    "https://api.example.com/analytics",
+    "Analytics should be sent exactly once per user action"
+)
 
 // Get all matching requests
-let requests = HTTPRequests(url: "https://api.example.com/search")
+let requests = await HTTPRequests(url: "https://api.example.com/search")
 ```
 
 #### Advanced Matching
 
 ```swift
 // Match by HTTP method
-HTTPAssertRequested("https://api.example.com/data", method: "POST")
+HTTPAssertRequested(
+    "https://api.example.com/data",
+    method: "POST",
+    "POST request should be made to data endpoint"
+)
 
 // Match by headers
 HTTPAssertRequested(
     "https://api.example.com/data",
-    headers: ["Authorization": "Bearer token123"]
+    headers: ["Authorization": "Bearer token123"],
+    "Request should include proper authorization header"
 )
 
 // Match by query parameters
 HTTPAssertRequested(
     "https://api.example.com/search",
-    queryParameters: ["q": "swift", "limit": "10"]
+    queryParameters: ["q": "swift", "limit": "10"],
+    "Search request should include query and limit parameters"
 )
 
 // Use regular expressions for URL patterns
-HTTPAssertRequested(urlPattern: "https://api\\.example\\.com/users/\\d+")
+HTTPAssertRequested(
+    urlPattern: "https://api\\.example\\.com/users/\\d+",
+    "User API should be called with numeric user ID"
+)
 ```
 
 #### Waiting for Requests
 
 ```swift
-// Wait for a request to be made
-await waitForRequest("https://api.example.com/data", timeout: 10.0)
+// Wait for a request to be made (in XCTestCase)
+await waitForRequest(url: "https://api.example.com/data", timeout: 10.0)
 
 // Wait for a response to be received  
-await waitForResponse("https://api.example.com/data", timeout: 10.0)
+await waitForResponse(url: "https://api.example.com/data", timeout: 10.0)
 
 // Wait with custom conditions
 await waitForRequest(
@@ -223,10 +257,11 @@ await waitForRequest(
 Combine UI actions with HTTP request assertions in a single call:
 
 ```swift
-// Perform an action and wait for a specific HTTP request
-try await HTTPPerformActionAndAssertRequested(
+// Perform an action and wait for a specific HTTP request (in XCTestCase)
+try await performActionAndAssertRequested(
     urlPattern: "https://api\\.example\\.com/search.*",
     method: "GET",
+    "Search API should be called after tapping search button",
     timeout: 5.0
 ) {
     // UI action that should trigger the HTTP request
@@ -242,11 +277,26 @@ try await HTTPPerformActionAndAssertRequested(
 }
 
 // Simplified version without request inspection
-try await HTTPPerformActionAndAssertRequested(
+try await performActionAndAssertRequested(
     url: "https://analytics.example.com/event",
-    method: "POST"
+    method: "POST",
+    "Analytics event should be triggered by button tap"
 ) {
     app.buttons["Track Event"].tap()
+}
+
+// Wait for both request and response
+try await performActionAndAssertResponse(
+    url: "https://api.example.com/login",
+    method: "POST",
+    "Login request should complete successfully"
+) {
+    app.buttons["Login"].tap()
+} onRequested: { request in
+    print("Login request sent")
+} onResponse: { request in
+    print("Login response received")
+    XCTAssertEqual(request.response?.statusCode, 200)
 }
 ```
 

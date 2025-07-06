@@ -179,6 +179,103 @@ public extension XCTestCase {
         }
     }
     
+    // MARK: - Action and Assert Methods
+    
+    /// Performs an action and waits for a matching HTTP request to be fired
+    func performActionAndAssertRequested(
+        url: String? = nil,
+        urlPattern: String? = nil,
+        host: String? = nil,
+        relativePath: String? = nil,
+        method: String? = nil,
+        headers: [String: String]? = nil,
+        queryParameters: [String: String]? = nil,
+        timeout: TimeInterval = 10.0,
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #filePath,
+        line: UInt = #line,
+        action: () async throws -> Void,
+        onRequested: ((HTTPRequests.HTTPRequest) async -> Void)? = nil
+    ) async throws {
+        let startTime = Date()
+        
+        // Perform the action
+        try await action()
+        
+        // Wait for the request to be fired
+        if let request = await waitForRequest(
+            url: url,
+            urlPattern: urlPattern,
+            host: host,
+            relativePath: relativePath,
+            method: method,
+            headers: headers,
+            queryParameters: queryParameters,
+            since: startTime,
+            timeout: timeout,
+            file: file,
+            line: line
+        ) {
+            await onRequested?(request)
+        }
+        // If request is nil, XCTFail already called inside waitForRequest
+    }
+    
+    /// Performs an action and waits for a matching HTTP request to receive a response
+    func performActionAndAssertResponse(
+        url: String? = nil,
+        urlPattern: String? = nil,
+        host: String? = nil,
+        relativePath: String? = nil,
+        method: String? = nil,
+        headers: [String: String]? = nil,
+        queryParameters: [String: String]? = nil,
+        timeout: TimeInterval = 10.0,
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #filePath,
+        line: UInt = #line,
+        action: () async throws -> Void,
+        onRequested: ((HTTPRequests.HTTPRequest) async -> Void)? = nil,
+        onResponse: ((HTTPRequests.HTTPRequest) async -> Void)? = nil
+    ) async throws {
+        let startTime = Date()
+        
+        // Perform the action
+        try await action()
+        
+        // First wait for the request to be fired
+        guard let request = await waitForRequest(
+            url: url,
+            urlPattern: urlPattern,
+            host: host,
+            relativePath: relativePath,
+            method: method,
+            headers: headers,
+            queryParameters: queryParameters,
+            since: startTime,
+            timeout: timeout,
+            file: file,
+            line: line
+        ) else {
+            return // XCTFail already called inside waitForRequest
+        }
+        
+        // Call onRequested callback
+        await onRequested?(request)
+        
+        // Then wait for the response
+        if let responseRequest = await waitForResponse(
+            for: request,
+            since: startTime,
+            timeout: timeout,
+            file: file,
+            line: line
+        ) {
+            await onResponse?(responseRequest)
+        }
+        // If response is nil, XCTFail already called inside waitForResponse
+    }
+    
     // MARK: - Context Wait Methods
     
     /// Waits for a context value to be updated or become available

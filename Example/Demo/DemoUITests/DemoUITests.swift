@@ -81,13 +81,15 @@ final class DemoUITests: XCTestCase {
         // Verify all requests were made using HTTPAssertRequested
         HTTPAssertRequested(
             urlPattern: ".*google\\.com/search.*",
-            method: "GET", queryParameters: ["q": "Swift programming"]
+            method: "GET", queryParameters: ["q": "Swift programming"],
+            "Google search request with 'Swift programming' query should exist"
         )
         
         // Test new methods: assert exactly one Google search
         HTTPAssertRequestedOnce(
             urlPattern: ".*google\\.com/search.*",
-            method: "GET"
+            method: "GET",
+            "There should be exactly one Google search request"
         )
         
         // Test getting requests and checking count
@@ -148,9 +150,10 @@ final class DemoUITests: XCTestCase {
         // Test the new convenience assertion methods
         
         // Example 1: Perform action and assert request was fired
-        try await HTTPPerformActionAndAssertRequested(
+        try await performActionAndAssertRequested(
             urlPattern: ".*google\\.com/search.*",
-            method: "GET"
+            method: "GET",
+            "SwiftTesting Google search request should be fired after clicking search button"
         ) {
             // Action: Search on Google
             let searchField = app.textFields["Enter search query"]
@@ -166,7 +169,7 @@ final class DemoUITests: XCTestCase {
         }
         
         // Example 2: Perform action and wait for response
-//        try await HTTPPerformActionAndAssertResponse(
+//        try await performActionAndAssertResponse(
 //            url: "https://api.github.com/zen",
 //            method: "GET"
 //        ) {
@@ -185,9 +188,10 @@ final class DemoUITests: XCTestCase {
 //        }
         
         // Example 3: Multiple actions with different APIs
-        try await HTTPPerformActionAndAssertRequested(
+        try await performActionAndAssertRequested(
             urlPattern: "https://httpbin.org/get*",
-            method: "GET"
+            method: "GET",
+            "HTTPBin GET request should be fired after clicking the button"
         ) {
             let httpbinButton = app.buttons["Call HTTPBin API"]
             httpbinButton.tap()
@@ -202,9 +206,10 @@ final class DemoUITests: XCTestCase {
         // Test header and query parameter assertions with various API calls
         
         // 1. Test GitHub API with custom headers
-        try await HTTPPerformActionAndAssertRequested(
+        try await performActionAndAssertRequested(
             url: "https://api.github.com/zen",
-            method: "GET"
+            method: "GET",
+            "GitHub Zen API request should be fired with correct headers"
         ) {
             let githubButton = app.buttons["Call GitHub API"]
             githubButton.tap()
@@ -231,9 +236,10 @@ final class DemoUITests: XCTestCase {
         }
         
         // 2. Test HTTPBin API with query parameters and headers
-        try await HTTPPerformActionAndAssertRequested(
+        try await performActionAndAssertRequested(
             urlPattern: "https://httpbin.org/get*",
-            method: "GET"
+            method: "GET",
+            "HTTPBin request should contain expected query parameters and headers"
         ) {
             let httpbinButton = app.buttons["Call HTTPBin API"]
             httpbinButton.tap()
@@ -277,9 +283,10 @@ final class DemoUITests: XCTestCase {
         }
         
         // 3. Test JSONPlaceholder API with multiple query parameters
-        try await HTTPPerformActionAndAssertRequested(
+        try await performActionAndAssertRequested(
             urlPattern: ".*jsonplaceholder\\.typicode\\.com/posts.*",
-            method: "GET"
+            method: "GET",
+            "JSONPlaceholder posts request should include userId and page parameters"
         ) {
             let jsonButton = app.buttons["Call JSONPlaceholder API"]
             jsonButton.tap()
@@ -311,9 +318,10 @@ final class DemoUITests: XCTestCase {
         }
         
         // 4. Test Google search with query parameters (URL encoded)
-        try await HTTPPerformActionAndAssertRequested(
+        try await performActionAndAssertRequested(
             urlPattern: ".*google\\.com/search.*",
-            method: "GET"
+            method: "GET",
+            "Google search with 'Swift HTTP Testing' query should be properly URL encoded"
         ) {
             let searchField = app.textFields["Enter search query"]
             searchField.tap()
@@ -419,6 +427,19 @@ final class DemoUITests: XCTestCase {
         for request in httpbinRequests {
             HTTPAssertQueryParameterNotExists(request, name: "q")
         }
+        
+        // Test HTTPAssertNotRequested with custom message
+        await HTTPAssertNotRequested(
+            url: "https://api.example.com/unauthorized",
+            method: "POST",
+            "No unauthorized API calls should be made during the test"
+        )
+        
+        // Test that no DELETE requests were made
+        await HTTPAssertNotRequested(
+            method: "DELETE",
+            "DELETE requests should not be made in this demo app"
+        )
     }
 }
 
