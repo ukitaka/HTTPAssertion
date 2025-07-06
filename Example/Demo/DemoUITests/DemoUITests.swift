@@ -50,7 +50,7 @@ final class DemoUITests: XCTestCase {
 //            timeout: 5.0
 //        )
 //        XCTAssertNotNil(githubResponse, "GitHub API should respond")
-//        XCTAssertEqual(githubResponse?.response?.statusCode, 200, "GitHub API should return 200")
+//        HTTPAssertResponseStatus(githubResponse, statusCode: 200, "GitHub API should return 200 status")
         
         // 3. Call HTTPBin API and wait for response
         let httpbinButton = app.buttons["Call HTTPBin API"]
@@ -63,7 +63,7 @@ final class DemoUITests: XCTestCase {
             timeout: 5.0
         )
         XCTAssertNotNil(httpbinResponse, "HTTPBin API should respond")
-        XCTAssertEqual(httpbinResponse?.response?.statusCode, 200, "HTTPBin API should return 200")
+        HTTPAssertResponseStatus(httpbinResponse, statusCode: 200, "HTTPBin API should return 200 status")
         
         // 4. Call JSONPlaceholder API and wait for response
         let jsonButton = app.buttons["Call JSONPlaceholder API"]
@@ -76,7 +76,7 @@ final class DemoUITests: XCTestCase {
             timeout: 5.0
         )
         XCTAssertNotNil(jsonResponse, "JSONPlaceholder API should respond")
-        XCTAssertEqual(jsonResponse?.response?.statusCode, 200, "JSONPlaceholder API should return 200")
+        HTTPAssertResponseStatus(jsonResponse, statusCode: 200, "JSONPlaceholder API should return 200 status")
         
         // Verify all requests were made using HTTPAssertRequested
         HTTPAssertRequested(
@@ -184,7 +184,7 @@ final class DemoUITests: XCTestCase {
 //            // Called when response is received
 //            print("GitHub API response received")
 //            XCTAssertNotNil(request.response)
-//            XCTAssertEqual(request.response?.statusCode, 200)
+//            HTTPAssertResponseStatus(request, statusCode: 200, "Response should return 200 status")
 //        }
         
         // Example 3: Multiple actions with different APIs

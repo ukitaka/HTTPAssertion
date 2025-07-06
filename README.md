@@ -202,6 +202,17 @@ HTTPAssertRequestedOnce(
 
 // Get all matching requests
 let requests = await HTTPRequests(url: "https://api.example.com/search")
+
+// Assert response status code
+let request = await waitForResponse(url: "https://api.example.com/data")
+HTTPAssertResponseStatus(request, statusCode: 200)
+
+// Assert with custom message
+HTTPAssertResponseStatus(
+    request,
+    statusCode: 201,
+    "API should return 201 Created status for new resource"
+)
 ```
 
 #### Advanced Matching
@@ -232,6 +243,28 @@ HTTPAssertRequested(
 HTTPAssertRequested(
     urlPattern: "https://api\\.example\\.com/users/\\d+",
     "User API should be called with numeric user ID"
+)
+```
+
+#### Response Assertions
+
+```swift
+// Assert specific status code
+let request = await waitForResponse(url: "https://api.example.com/users")
+HTTPAssertResponseStatus(request, statusCode: 200)
+
+// Common status code examples
+HTTPAssertResponseStatus(createRequest, statusCode: 201) // Created
+HTTPAssertResponseStatus(updateRequest, statusCode: 200) // OK
+HTTPAssertResponseStatus(deleteRequest, statusCode: 204) // No Content
+HTTPAssertResponseStatus(notFoundRequest, statusCode: 404) // Not Found
+HTTPAssertResponseStatus(unauthorizedRequest, statusCode: 401) // Unauthorized
+
+// With custom failure messages
+HTTPAssertResponseStatus(
+    request,
+    statusCode: 200,
+    "User creation API should return 200 OK status"
 )
 ```
 
@@ -296,7 +329,7 @@ try await performActionAndAssertResponse(
     print("Login request sent")
 } onResponse: { request in
     print("Login response received")
-    XCTAssertEqual(request.response?.statusCode, 200)
+    HTTPAssertResponseStatus(request, statusCode: 200, "Login should return success status")
 }
 ```
 

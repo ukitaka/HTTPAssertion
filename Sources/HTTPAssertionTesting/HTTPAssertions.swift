@@ -341,6 +341,36 @@ public func HTTPAssertQueryParameterNotEqual(
     }
 }
 
+// MARK: - Response Status Assertions
+
+/// Asserts that a request has a specific HTTP response status code
+public func HTTPAssertResponseStatus(
+    _ request: HTTPRequests.HTTPRequest?,
+    statusCode: Int,
+    _ message: @autoclosure () -> String = "",
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard let request = request else {
+        XCTFail(message().isEmpty ? "Request is nil" : message(), file: file, line: line)
+        return
+    }
+    
+    guard let response = request.response else {
+        XCTFail(message().isEmpty ? "Request has no response" : message(), file: file, line: line)
+        return
+    }
+    
+    let actualStatusCode = response.statusCode
+    if actualStatusCode != statusCode {
+        XCTFail(
+            message().isEmpty ? "Response status code mismatch. Expected: \(statusCode), Actual: \(actualStatusCode)" : message(),
+            file: file,
+            line: line
+        )
+    }
+}
+
 // MARK: - Header Assertions
 
 /// Asserts that a request contains a specific header with the expected value
