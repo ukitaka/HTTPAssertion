@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E828DF532E0F960F00F5D85D /* HTTPAssertionTesting in Frameworks */ = {isa = PBXBuildFile; productRef = E828DF522E0F960F00F5D85D /* HTTPAssertionTesting */; };
-		E8C794432E0F9E170013C1C1 /* HTTPAssertionLogging in Frameworks */ = {isa = PBXBuildFile; productRef = E8C794422E0F9E170013C1C1 /* HTTPAssertionLogging */; };
-		E8C794452E0F9E3B0013C1C1 /* HTTPAssertionLogging in Frameworks */ = {isa = PBXBuildFile; productRef = E8C794442E0F9E3B0013C1C1 /* HTTPAssertionLogging */; };
+		E83494932E59A2E20066F8E5 /* HTTPAssertionLogging in Frameworks */ = {isa = PBXBuildFile; productRef = E83494922E59A2E20066F8E5 /* HTTPAssertionLogging */; };
+		E83494972E59A3320066F8E5 /* HTTPAssertionLogging in Frameworks */ = {isa = PBXBuildFile; productRef = E83494962E59A3320066F8E5 /* HTTPAssertionLogging */; };
+		E83494992E59A3320066F8E5 /* HTTPAssertionTesting in Frameworks */ = {isa = PBXBuildFile; productRef = E83494982E59A3320066F8E5 /* HTTPAssertionTesting */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,7 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E8C794452E0F9E3B0013C1C1 /* HTTPAssertionLogging in Frameworks */,
+				E83494932E59A2E20066F8E5 /* HTTPAssertionLogging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -67,8 +67,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E828DF532E0F960F00F5D85D /* HTTPAssertionTesting in Frameworks */,
-				E8C794432E0F9E170013C1C1 /* HTTPAssertionLogging in Frameworks */,
+				E83494992E59A3320066F8E5 /* HTTPAssertionTesting in Frameworks */,
+				E83494972E59A3320066F8E5 /* HTTPAssertionLogging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,7 +122,7 @@
 			);
 			name = Demo;
 			packageProductDependencies = (
-				E8C794442E0F9E3B0013C1C1 /* HTTPAssertionLogging */,
+				E83494922E59A2E20066F8E5 /* HTTPAssertionLogging */,
 			);
 			productName = Demo;
 			productReference = E874161B2E0F94B600D26247 /* Demo.app */;
@@ -146,8 +146,8 @@
 			);
 			name = DemoUITests;
 			packageProductDependencies = (
-				E828DF522E0F960F00F5D85D /* HTTPAssertionTesting */,
-				E8C794422E0F9E170013C1C1 /* HTTPAssertionLogging */,
+				E83494962E59A3320066F8E5 /* HTTPAssertionLogging */,
+				E83494982E59A3320066F8E5 /* HTTPAssertionTesting */,
 			);
 			productName = DemoUITests;
 			productReference = E87416322E0F94B700D26247 /* DemoUITests.xctest */;
@@ -182,7 +182,7 @@
 			mainGroup = E87416122E0F94B600D26247;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */,
+				E83494912E59A2E20066F8E5 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E874161C2E0F94B600D26247 /* Products */;
@@ -496,27 +496,26 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */ = {
+		E83494912E59A2E20066F8E5 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../../HTTPAssertion;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		E828DF522E0F960F00F5D85D /* HTTPAssertionTesting */ = {
+		E83494922E59A2E20066F8E5 /* HTTPAssertionLogging */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;
+			productName = HTTPAssertionLogging;
+		};
+		E83494962E59A3320066F8E5 /* HTTPAssertionLogging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E83494912E59A2E20066F8E5 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;
+			productName = HTTPAssertionLogging;
+		};
+		E83494982E59A3320066F8E5 /* HTTPAssertionTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E83494912E59A2E20066F8E5 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;
 			productName = HTTPAssertionTesting;
-		};
-		E8C794422E0F9E170013C1C1 /* HTTPAssertionLogging */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;
-			productName = HTTPAssertionLogging;
-		};
-		E8C794442E0F9E3B0013C1C1 /* HTTPAssertionLogging */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E87416452E0F958400D26247 /* XCLocalSwiftPackageReference "../../../HTTPAssertion" */;
-			productName = HTTPAssertionLogging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

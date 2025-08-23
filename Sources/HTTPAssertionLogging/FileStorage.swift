@@ -1,7 +1,7 @@
 import Foundation
 
 /// Generic file-based storage for Codable data
-public actor FileStorage {
+public final class FileStorage: @unchecked Sendable {
     private let fileManager = FileManager.default
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()

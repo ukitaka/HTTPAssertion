@@ -1,7 +1,7 @@
 # HTTPAssertion
 
 [![Swift Package Manager](https://img.shields.io/badge/Swift%20Package%20Manager-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager)
-[![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg?style=flat)](https://swift.org)
+[![Swift 6.2](https://img.shields.io/badge/Swift-6.2-orange.svg?style=flat)](https://swift.org)
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20%7C%20macOS-blue.svg?style=flat)](https://swift.org)
 
 HTTPAssertion is a Swift package that enables HTTP request assertion capabilities within XCUITest, allowing you to verify that specific HTTP requests are made during UI interactions that don't have visible UI feedback.
@@ -188,10 +188,10 @@ HTTPAssertRequested(
 )
 
 // Assert that a request was NOT made
-await HTTPAssertNotRequested("https://api.example.com/sensitive")
+HTTPAssertNotRequested("https://api.example.com/sensitive")
 
 // Assert with custom message for not requested
-await HTTPAssertNotRequested(
+HTTPAssertNotRequested(
     "https://api.example.com/sensitive",
     "Sensitive API should never be called in this test scenario"
 )
@@ -203,7 +203,7 @@ HTTPAssertRequestedOnce(
 )
 
 // Get all matching requests
-let requests = await HTTPRequests(url: "https://api.example.com/search")
+let requests = HTTPRequests(url: "https://api.example.com/search")
 
 // Assert response status code
 let request = await waitForResponse(url: "https://api.example.com/data")
@@ -428,7 +428,7 @@ HTTPAssertion fills the gap between unit tests and pure UI testing, but it shoul
 ## Requirements
 
 - iOS 15.0+ / macOS 12.0+
-- Swift 6.0+
+- Swift 6.2+
 - Xcode 15.0+
 - **iOS Simulator only** (does not work on physical devices due to shared storage requirements)
 

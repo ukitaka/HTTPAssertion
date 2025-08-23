@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-08-23
+
+### Changed
+- **Swift 6.2 Compatibility**: Updated project to support Swift 6.2 with Xcode 16
+- **Synchronous APIs**: Converted FileStorage from actor to class, making several operations synchronous
+  - `HTTPRequests()` no longer requires `await`
+  - `HTTPAssertNotRequested()` no longer requires `await`
+  - FileStorage operations are now synchronous for better performance
+- **Removed unnecessary async keywords**: Cleaned up functions that don't perform async operations
+- **Improved Swift Concurrency**: Better adherence to Swift 6 strict concurrency checking
+
+### Fixed
+- Resolved Swift 6.2 concurrency warnings and errors
+- Fixed data race warnings in Task closures
+- Eliminated all "No 'async' operations occur within 'await' expression" warnings
+
+### Documentation
+- Updated README.md examples to reflect synchronous API changes
+- Updated Swift version requirements to Swift 6.2+
+- Fixed example code to remove unnecessary `await` keywords
+
 ## [1.3.0] - 2025-07-06
 
 ### Added
@@ -94,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Convenience Methods**: `HTTPPerformActionAndAssertRequested` for combined UI actions and assertions
 - **AllowedHosts Support**: Configure which hosts should be logged
 
+[1.4.0]: https://github.com/ukitaka/HTTPAssertion/compare/1.3.0...1.4.0
 [1.3.0]: https://github.com/ukitaka/HTTPAssertion/compare/1.2.0...1.3.0
 [1.2.0]: https://github.com/ukitaka/HTTPAssertion/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/ukitaka/HTTPAssertion/compare/1.0.0...1.1.0

@@ -39,8 +39,8 @@ public final class HTTPAssertionLogging {
         
         // Initialize storage
         Task {
-            await HTTPRequests.initialize()
-            await Context.initialize()
+            HTTPRequests.initialize()
+            Context.initialize()
         }
         
         // Start periodic context updates if provided

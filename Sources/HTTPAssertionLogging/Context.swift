@@ -6,41 +6,41 @@ public enum Context {
     public static let storage = FileStorage(subdirectory: "Context")
     
     /// Initializes the context storage directory
-    public static func initialize() async {
-        await storage.initialize()
+    public static func initialize() {
+        storage.initialize()
     }
     
     /// Stores a context object with a given key
-    public static func store<T: Codable & Sendable>(_ context: T, forKey key: String) async throws {
+    public static func store<T: Codable & Sendable>(_ context: T, forKey key: String) throws {
         do {
-            try await storage.store(context, forKey: key)
+            try storage.store(context, forKey: key)
         } catch {
             throw ContextError.encodingFailed(error)
         }
     }
     
     /// Retrieves a context object for a given key
-    public static func retrieve<T: Codable & Sendable>(_ type: T.Type, forKey key: String) async throws -> T? {
+    public static func retrieve<T: Codable & Sendable>(_ type: T.Type, forKey key: String) throws -> T? {
         do {
-            return try await storage.retrieve(type, forKey: key)
+            return try storage.retrieve(type, forKey: key)
         } catch {
             throw ContextError.decodingFailed(error)
         }
     }
     
     /// Lists all stored context keys
-    public static func listKeys() async -> [String] {
-        return await storage.listKeys()
+    public static func listKeys() -> [String] {
+        return storage.listKeys()
     }
     
     /// Removes a stored context for a given key
-    public static func remove(forKey key: String) async throws {
-        try await storage.remove(forKey: key)
+    public static func remove(forKey key: String) throws {
+        try storage.remove(forKey: key)
     }
     
     /// Clears all stored contexts
-    public static func clear() async {
-        await storage.clear()
+    public static func clear() {
+        storage.clear()
     }
     
 }

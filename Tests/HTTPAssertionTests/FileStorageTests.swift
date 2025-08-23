@@ -6,17 +6,17 @@ final class FileStorageTests: XCTestCase {
     private var storage: FileStorage!
     private let testSubdirectory = "FileStorageTests"
     
-    override func setUp() async throws {
-        try await super.setUp()
+    override func setUp() {
+        super.setUp()
         storage = FileStorage(subdirectory: testSubdirectory)
         // Initialize storage to ensure directory is created
-        await storage.initialize()
-        await storage.clear()
+        storage.initialize()
+        storage.clear()
     }
     
-    override func tearDown() async throws {
-        await storage.clear()
-        try await super.tearDown()
+    override func tearDown() {
+        storage.clear()
+        super.tearDown()
     }
     
     func testFileCreationAndModificationDates() async throws {
@@ -29,13 +29,13 @@ final class FileStorageTests: XCTestCase {
         let updatedData = TestData(value: "updated")
         
         // Store initial data
-        try await storage.store(initialData, forKey: key)
+        try storage.store(initialData, forKey: key)
         
         // Wait to ensure time difference
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
         
         // Get the storage directory from FileStorage
-        let storageDir = await storage.storageDirectory
+        let storageDir = storage.storageDirectory
         XCTAssertNotNil(storageDir, "Storage directory should not be nil")
         let fileURL = storageDir!.appendingPathComponent("\(key).json")
         
@@ -54,7 +54,7 @@ final class FileStorageTests: XCTestCase {
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
         
         // Update the file
-        try await storage.store(updatedData, forKey: key)
+        try storage.store(updatedData, forKey: key)
         
         // Get updated attributes
         let updatedAttributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
@@ -68,7 +68,7 @@ final class FileStorageTests: XCTestCase {
         XCTAssertGreaterThan(modificationDate2, modificationDate1)
         
         // Verify data was actually updated
-        let retrieved = try await storage.retrieve(TestData.self, forKey: key)
+        let retrieved = try storage.retrieve(TestData.self, forKey: key)
         XCTAssertEqual(retrieved?.value, "updated")
     }
     
@@ -86,16 +86,16 @@ final class FileStorageTests: XCTestCase {
         ]
         
         for item in items {
-            try await storage.store(item, forKey: item.id)
+            try storage.store(item, forKey: item.id)
             try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds between creates
         }
         
         // Load sorted by creation date (ascending)
-        let sortedAscending = await storage.loadSorted(TestData.self, sortBy: .creationDate, ascending: true)
+        let sortedAscending = storage.loadSorted(TestData.self, sortBy: .creationDate, ascending: true)
         XCTAssertEqual(sortedAscending.map { $0.id }, ["1", "2", "3"])
         
         // Load sorted by creation date (descending)
-        let sortedDescending = await storage.loadSorted(TestData.self, sortBy: .creationDate, ascending: false)
+        let sortedDescending = storage.loadSorted(TestData.self, sortBy: .creationDate, ascending: false)
         XCTAssertEqual(sortedDescending.map { $0.id }, ["3", "2", "1"])
     }
     
@@ -113,19 +113,19 @@ final class FileStorageTests: XCTestCase {
         ]
         
         for item in items {
-            try await storage.store(item, forKey: item.id)
+            try storage.store(item, forKey: item.id)
             try await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
         }
         
         // Update files in different order
         try await Task.sleep(nanoseconds: 100_000_000)
-        try await storage.store(TestData(id: "2", value: "second-updated"), forKey: "2")
+        try storage.store(TestData(id: "2", value: "second-updated"), forKey: "2")
         
         try await Task.sleep(nanoseconds: 100_000_000)
-        try await storage.store(TestData(id: "1", value: "first-updated"), forKey: "1")
+        try storage.store(TestData(id: "1", value: "first-updated"), forKey: "1")
         
         // Load sorted by modification date (ascending)
-        let sortedByMod = await storage.loadSorted(TestData.self, sortBy: .modificationDate, ascending: true)
+        let sortedByMod = storage.loadSorted(TestData.self, sortBy: .modificationDate, ascending: true)
         
         // "3" was not updated, so it should be first (oldest modification)
         // Then "2" (updated first), then "1" (updated last)
@@ -146,12 +146,12 @@ final class FileStorageTests: XCTestCase {
         
         // Create 5 files
         for i in 1...5 {
-            try await storage.store(TestData(id: "\(i)"), forKey: "\(i)")
+            try storage.store(TestData(id: "\(i)"), forKey: "\(i)")
             try await Task.sleep(nanoseconds: 50_000_000)
         }
         
         // Load only 3 most recent by creation date
-        let limited = await storage.loadSorted(TestData.self, limit: 3, sortBy: .creationDate, ascending: false)
+        let limited = storage.loadSorted(TestData.self, limit: 3, sortBy: .creationDate, ascending: false)
         XCTAssertEqual(limited.count, 3)
         XCTAssertEqual(limited.map { $0.id }, ["5", "4", "3"])
     }
@@ -164,7 +164,7 @@ final class FileStorageTests: XCTestCase {
         
         // Create first 2 files
         for i in 1...2 {
-            try await storage.store(TestData(id: "\(i)", value: "value\(i)"), forKey: "\(i)")
+            try storage.store(TestData(id: "\(i)", value: "value\(i)"), forKey: "\(i)")
             try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
         }
         
@@ -174,22 +174,22 @@ final class FileStorageTests: XCTestCase {
         
         // Create remaining files
         for i in 3...5 {
-            try await storage.store(TestData(id: "\(i)", value: "value\(i)"), forKey: "\(i)")
+            try storage.store(TestData(id: "\(i)", value: "value\(i)"), forKey: "\(i)")
             try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
         }
         
         // Load files created since midTime (should get files 3, 4, 5)
-        let filteredByCreation = await storage.loadSorted(TestData.self, sortBy: .creationDate, ascending: true, since: midTime)
+        let filteredByCreation = storage.loadSorted(TestData.self, sortBy: .creationDate, ascending: true, since: midTime)
         XCTAssertEqual(filteredByCreation.count, 3)
         XCTAssertEqual(filteredByCreation.map { $0.id }, ["3", "4", "5"])
         
         // Test with modification date filter
         let futureTime = Date().addingTimeInterval(1.0)
-        let filteredByModification = await storage.loadSorted(TestData.self, sortBy: .modificationDate, ascending: true, since: futureTime)
+        let filteredByModification = storage.loadSorted(TestData.self, sortBy: .modificationDate, ascending: true, since: futureTime)
         XCTAssertEqual(filteredByModification.count, 0) // No files modified after future time
         
         // Test with limit + date filter
-        let limitedAndFiltered = await storage.loadSorted(TestData.self, limit: 2, sortBy: .creationDate, ascending: true, since: midTime)
+        let limitedAndFiltered = storage.loadSorted(TestData.self, limit: 2, sortBy: .creationDate, ascending: true, since: midTime)
         XCTAssertEqual(limitedAndFiltered.count, 2)
         XCTAssertEqual(limitedAndFiltered.map { $0.id }, ["3", "4"])
     }

@@ -128,7 +128,7 @@ func testSimpleGetRequest() throws {
     
     app.buttons[\"Simple GET Request\"].tap()
     
-    waitForRequest(\"https://httpbin.org/get\", timeout: 5.0)
+    let _ = waitForRequest(\"https://httpbin.org/get\", timeout: 5.0)
     HTTPAssertRequestedOnce(\"https://httpbin.org/get\")
 }
 

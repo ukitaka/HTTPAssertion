@@ -11,18 +11,18 @@ public enum HTTPRequests {
     }
     
     /// Initializes the storage directory
-    static func initialize() async {
-        await storage.initialize()
+    static func initialize() {
+        storage.initialize()
     }
     
     /// Stores a recorded HTTP request
-    static func store(_ request: HTTPRequest) async throws {
-        try await storage.store(request, forKey: request.id)
+    static func store(_ request: HTTPRequest) throws {
+        try storage.store(request, forKey: request.id)
     }
     
     /// Updates a request with response information using UUID
-    static func updateResponse(requestID: String, response: Foundation.HTTPURLResponse, data: Data?, error: Error?) async throws {
-        guard let request = try await storage.retrieve(HTTPRequest.self, forKey: requestID) else { return }
+    static func updateResponse(requestID: String, response: Foundation.HTTPURLResponse, data: Data?, error: Error?) throws {
+        guard let request = try storage.retrieve(HTTPRequest.self, forKey: requestID) else { return }
         
         // Update the request with response
         var updatedRequest = request
@@ -30,24 +30,24 @@ public enum HTTPRequests {
         updatedRequest.responseData = data
         updatedRequest.error = error.map(CodableError.init)
         
-        try await storage.store(updatedRequest, forKey: requestID)
+        try storage.store(updatedRequest, forKey: requestID)
     }
     
     /// Clears all stored requests
-    public static func clear() async {
-        await storage.clear()
+    public static func clear() {
+        storage.clear()
     }
     
     /// Gets all stored requests
-    public static func allRequests() async -> [HTTPRequest] {
-        let loadedRequests = await storage.loadAll(HTTPRequest.self)
+    public static func allRequests() -> [HTTPRequest] {
+        let loadedRequests = storage.loadAll(HTTPRequest.self)
         return loadedRequests.sorted { $0.timestamp < $1.timestamp }
     }
     
     /// Gets stored requests with optional sorting and date filtering
-    public static func recentRequests(sortBy: SortBy = .responseTime, ascending: Bool = false, since: Date? = nil) async -> [HTTPRequest] {
+    public static func recentRequests(sortBy: SortBy = .responseTime, ascending: Bool = false, since: Date? = nil) -> [HTTPRequest] {
         let storageSortKey: FileStorage.SortKey = sortBy == .requestTime ? .creationDate : .modificationDate
-        return await storage.loadSorted(HTTPRequest.self, sortBy: storageSortKey, ascending: ascending, since: since)
+        return storage.loadSorted(HTTPRequest.self, sortBy: storageSortKey, ascending: ascending, since: since)
     }
 }
 

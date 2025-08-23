@@ -57,7 +57,7 @@ final class HTTPAssertionTests: XCTestCase {
     
     func testRecentRequestsWithDateFilter() async throws {
         // Clear any existing requests
-        await HTTPRequests.clear()
+        HTTPRequests.clear()
         
         // Create first request
         let request1 = HTTPRequests.HTTPRequest(
@@ -68,7 +68,7 @@ final class HTTPAssertionTests: XCTestCase {
             responseData: nil,
             error: nil
         )
-        try await HTTPRequests.store(request1)
+        try HTTPRequests.store(request1)
         try await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
         
         // Get time after first request
@@ -85,12 +85,12 @@ final class HTTPAssertionTests: XCTestCase {
                 responseData: nil,
                 error: nil
             )
-            try await HTTPRequests.store(request)
+            try HTTPRequests.store(request)
             try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
         }
         
         // Test filtering by creation time
-        let recentRequests = await HTTPRequests.recentRequests(since: midTime)
+        let recentRequests = HTTPRequests.recentRequests(since: midTime)
         
         // Should get requests 2 and 3 (created after midTime)
         XCTAssertEqual(recentRequests.count, 2)
@@ -99,12 +99,12 @@ final class HTTPAssertionTests: XCTestCase {
         XCTAssertFalse(recentRequests.contains { $0.id == "test-1" })
         
         // Test with date filter only
-        let filteredRecent = await HTTPRequests.recentRequests(since: midTime)
+        let filteredRecent = HTTPRequests.recentRequests(since: midTime)
         XCTAssertEqual(filteredRecent.count, 2)
         XCTAssertEqual(filteredRecent.first?.id, "test-3") // Most recent first
         
         // Test recentRequests with request time sorting and date filter
-        let byRequestTime = await HTTPRequests.recentRequests(sortBy: .requestTime, ascending: true, since: midTime)
+        let byRequestTime = HTTPRequests.recentRequests(sortBy: .requestTime, ascending: true, since: midTime)
         XCTAssertEqual(byRequestTime.count, 2)
         XCTAssertEqual(byRequestTime.map { $0.id }, ["test-2", "test-3"]) // Ascending order
     }

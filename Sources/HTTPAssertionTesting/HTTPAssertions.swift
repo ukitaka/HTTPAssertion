@@ -32,17 +32,8 @@ public func HTTPAssertRequested(
             // Synchronous predicate check - cannot use async/await here
             // This is a limitation with current XCTest framework
             // We need to check the disk directly
-            // Use HTTPRequests static methods directly
-            // Use Task.detached to avoid actor isolation issues
-            let semaphore = DispatchSemaphore(value: 0)
-            var result = false
-            Task.detached {
-                let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
-                result = requests.contains { matcher.matches($0) }
-                semaphore.signal()
-            }
-            semaphore.wait()
-            return result
+            let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+            return requests.contains { matcher.matches($0) }
         },
         object: nil
     )
@@ -72,7 +63,7 @@ public func HTTPAssertNotRequested(
     _ message: @autoclosure () -> String = "",
     file: StaticString = #filePath,
     line: UInt = #line
-) async {
+) {
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,
@@ -92,10 +83,10 @@ public func HTTPAssertNotRequested(
         object: nil
     )
     
-    let _ = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
+    let _ = XCTWaiter.wait(for: [expectation], timeout: timeout)
     
     // After waiting, check that no matching request exists
-    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+    let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
     let found = requests.contains { matcher.matches($0) }
     
     XCTAssertFalse(
@@ -116,7 +107,7 @@ public func HTTPRequests(
     headers: [String: String]? = nil,
     queryParameters: [String: String]? = nil,
     since: Date? = Date().addingTimeInterval(-30.0)
-) async -> [HTTPRequests.HTTPRequest] {
+) -> [HTTPRequests.HTTPRequest] {
     let matcher = HTTPRequestMatcher(
         url: url,
         urlPattern: urlPattern,
@@ -127,7 +118,7 @@ public func HTTPRequests(
         queryParameters: queryParameters
     )
     
-    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+    let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
     return requests.filter { matcher.matches($0) }
 }
 
@@ -159,14 +150,8 @@ public func HTTPAssertRequestedOnce(
     let expectation = XCTNSPredicateExpectation(
         predicate: NSPredicate { _, _ in
             // Use HTTPRequests static methods directly
-            let semaphore = DispatchSemaphore(value: 0)
-            var matchingCount = 0
-            Task.detached {
-                let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
-                matchingCount = requests.filter { matcher.matches($0) }.count
-                semaphore.signal()
-            }
-            semaphore.wait()
+            let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+            let matchingCount = requests.filter { matcher.matches($0) }.count
             return matchingCount == 1
         },
         object: nil

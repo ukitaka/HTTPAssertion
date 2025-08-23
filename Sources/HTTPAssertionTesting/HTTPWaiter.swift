@@ -39,7 +39,7 @@ public extension XCTestCase {
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
-    ) async -> HTTPRequests.HTTPRequest? {
+    ) -> HTTPRequests.HTTPRequest? {
         let matcher = HTTPRequestMatcher(
             url: url,
             urlPattern: urlPattern,
@@ -53,23 +53,16 @@ public extension XCTestCase {
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ -> Bool in
                 // Use HTTPRequests static methods directly
-                let semaphore = DispatchSemaphore(value: 0)
-                var foundRequest: HTTPRequests.HTTPRequest? = nil
-                Task.detached {
-                    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
-                    foundRequest = requests.first { matcher.matches($0) && $0.response != nil }
-                    semaphore.signal()
-                }
-                semaphore.wait()
-                return foundRequest != nil
+                let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+                return requests.first { matcher.matches($0) && $0.response != nil } != nil
             },
             object: nil
         )
         
-        let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
+        let result = XCTWaiter.wait(for: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+            let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
             return requests.first { matcher.matches($0) && $0.response != nil }
         } else {
             XCTFail(
@@ -89,29 +82,22 @@ public extension XCTestCase {
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
-    ) async -> HTTPRequests.HTTPRequest? {
+    ) -> HTTPRequests.HTTPRequest? {
         let requestID = recordedRequest.id
         
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ -> Bool in
                 // Use HTTPRequests static methods directly
-                let semaphore = DispatchSemaphore(value: 0)
-                var foundRequest: HTTPRequests.HTTPRequest? = nil
-                Task.detached {
-                    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
-                    foundRequest = requests.first { $0.id == requestID && $0.response != nil }
-                    semaphore.signal()
-                }
-                semaphore.wait()
-                return foundRequest != nil
+                let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+                return requests.first { $0.id == requestID && $0.response != nil } != nil
             },
             object: nil
         )
         
-        let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
+        let result = XCTWaiter.wait(for: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+            let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
             return requests.first { $0.id == requestID && $0.response != nil }
         } else {
             XCTFail(
@@ -137,7 +123,7 @@ public extension XCTestCase {
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
-    ) async -> HTTPRequests.HTTPRequest? {
+    ) -> HTTPRequests.HTTPRequest? {
         let matcher = HTTPRequestMatcher(
             url: url,
             urlPattern: urlPattern,
@@ -151,23 +137,16 @@ public extension XCTestCase {
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ -> Bool in
                 // Use HTTPRequests static methods directly
-                let semaphore = DispatchSemaphore(value: 0)
-                var foundRequest: HTTPRequests.HTTPRequest? = nil
-                Task.detached {
-                    let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
-                    foundRequest = requests.first { matcher.matches($0) }
-                    semaphore.signal()
-                }
-                semaphore.wait()
-                return foundRequest != nil
+                let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+                return requests.first { matcher.matches($0) } != nil
             },
             object: nil
         )
         
-        let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
+        let result = XCTWaiter.wait(for: [expectation], timeout: timeout)
         
         if result == .completed {
-            let requests = await HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
+            let requests = HTTPRequests.recentRequests(sortBy: .requestTime, since: since)
             return requests.first { matcher.matches($0) }
         } else {
             XCTFail(
@@ -203,7 +182,7 @@ public extension XCTestCase {
         try await action()
         
         // Wait for the request to be fired
-        if let request = await waitForRequest(
+        if let request = waitForRequest(
             url: url,
             urlPattern: urlPattern,
             host: host,
@@ -244,7 +223,7 @@ public extension XCTestCase {
         try await action()
         
         // First wait for the request to be fired
-        guard let request = await waitForRequest(
+        guard let request = waitForRequest(
             url: url,
             urlPattern: urlPattern,
             host: host,
@@ -264,7 +243,7 @@ public extension XCTestCase {
         await onRequested?(request)
         
         // Then wait for the response
-        if let responseRequest = await waitForResponse(
+        if let responseRequest = waitForResponse(
             for: request,
             since: startTime,
             timeout: timeout,
@@ -286,9 +265,9 @@ public extension XCTestCase {
         timeout: TimeInterval = 10.0,
         file: StaticString = #filePath,
         line: UInt = #line
-    ) async throws -> T {
+    ) throws -> T {
         // Get the context file URL using FileStorage
-        guard let fileURL = await Context.storage.fileURL(forKey: key) else {
+        guard let fileURL = Context.storage.fileURL(forKey: key) else {
             XCTFail("Could not determine context file path", file: file, line: line)
             throw ContextWaitError.invalidStoragePath(key: key)
         }
@@ -297,31 +276,24 @@ public extension XCTestCase {
         
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ -> Bool in
-                let semaphore = DispatchSemaphore(value: 0)
-                var fileWasUpdated = false
-                
-                Task.detached {
-                    let fm = FileManager.default
-                    // Check if file exists and get its current modification date
-                    if fm.fileExists(atPath: filePath),
-                       let attributes = try? fm.attributesOfItem(atPath: filePath),
-                       let currentModificationDate = attributes[.modificationDate] as? Date {
-                        
-                        // Check if file was modified after the since date
-                        fileWasUpdated = currentModificationDate > since
-                    }
-                    semaphore.signal()
+                let fm = FileManager.default
+                // Check if file exists and get its current modification date
+                if fm.fileExists(atPath: filePath),
+                   let attributes = try? fm.attributesOfItem(atPath: filePath),
+                   let currentModificationDate = attributes[.modificationDate] as? Date {
+                    
+                    // Check if file was modified after the since date
+                    return currentModificationDate > since
                 }
-                semaphore.wait()
-                return fileWasUpdated
+                return false
             },
             object: nil
         )
         
-        let result = await XCTWaiter.fulfillment(of: [expectation], timeout: timeout)
+        let result = XCTWaiter.wait(for: [expectation], timeout: timeout)
         
         if result == .completed {
-            if let value = try await Context.retrieve(T.self, forKey: key) {
+            if let value = try Context.retrieve(T.self, forKey: key) {
                 return value
             } else {
                 XCTFail(

@@ -54,6 +54,10 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
         let mutableRequest = (request as NSURLRequest).mutableCopy() as! NSMutableURLRequest
         URLProtocol.setProperty(true, forKey: HTTPAssertionProtocol.httpAssertionInternalKey, in: mutableRequest)
         
+        // Capture values to avoid self capture in Task
+        let requestID = self.requestID
+        let request = self.request
+        
         // Log the request
         Task {
             let recordedRequest = HTTPRequests.HTTPRequest(
@@ -66,7 +70,7 @@ final class HTTPAssertionProtocol: URLProtocol, @unchecked Sendable {
             )
             
             do {
-                try await HTTPRequests.store(recordedRequest)
+                try HTTPRequests.store(recordedRequest)
             } catch {
                 print("HTTPAssertion: Failed to save request to disk: \(error)")
             }
@@ -111,10 +115,13 @@ extension HTTPAssertionProtocol: URLSessionDataDelegate {
         // Log the response
         if let response = response as? HTTPURLResponse {
             let data = (responseData ?? NSMutableData()) as Data
+            // Capture values to avoid self capture in Task
+            let requestID = self.requestID
+            
             Task {
                 // Update the matching request with response using UUID
                 do {
-                    try await HTTPRequests.updateResponse(
+                    try HTTPRequests.updateResponse(
                         requestID: requestID,
                         response: response,
                         data: data,
