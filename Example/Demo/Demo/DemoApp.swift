@@ -22,7 +22,7 @@ struct DemoApp: App {
                 ]
             )
             
-            try await Context.store(userContext, forKey: "user_context")
+            try Context.store(userContext, forKey: "user_context")
             
             // Store additional context as typed object
             let appState = AppState(
@@ -31,7 +31,7 @@ struct DemoApp: App {
                 environment: "debug"
             )
             
-            try await Context.store(appState, forKey: "app_state")
+            try Context.store(appState, forKey: "app_state")
         }
         #endif
     }

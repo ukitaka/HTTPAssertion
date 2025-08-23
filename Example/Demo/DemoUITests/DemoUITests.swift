@@ -6,16 +6,16 @@ import Demo
 final class DemoUITests: XCTestCase {
     var app: XCUIApplication!
 
-    override func setUp() async throws {
+    override func setUp() {
         continueAfterFailure = false
-        app = await XCUIApplication()
-        await app.launch()
+        app = XCUIApplication()
+        app.launch()
     }
     
 
-    override func tearDown() async throws {
-        await Context.clear()
-        await HTTPRequests.clear()
+    override func tearDown() {
+        Context.clear()
+        HTTPRequests.clear()
         app = nil
     }
 
@@ -32,7 +32,7 @@ final class DemoUITests: XCTestCase {
         searchButton.tap()
         
         // Wait for Google search request to be fired
-        let googleRequest = await waitForRequest(
+        let googleRequest = waitForRequest(
             urlPattern: ".*google\\.com/search.*",
             method: "GET",
             timeout: 5.0
@@ -46,7 +46,7 @@ final class DemoUITests: XCTestCase {
         httpbinButton.tap()
         
         // Wait for HTTPBin API response
-        let httpbinResponse = await waitForResponse(
+        let httpbinResponse = waitForResponse(
             urlPattern: "https://httpbin.org/get*",
             method: "GET",
             timeout: 5.0
@@ -59,7 +59,7 @@ final class DemoUITests: XCTestCase {
         jsonButton.tap()
         
         // Wait for JSONPlaceholder API response
-        let jsonResponse = await waitForResponse(
+        let jsonResponse = waitForResponse(
             urlPattern: "https://jsonplaceholder.typicode.com/posts*",
             method: "GET",
             timeout: 5.0
@@ -82,17 +82,16 @@ final class DemoUITests: XCTestCase {
         )
         
         // Test getting requests and checking count
-        let googleRequests = await HTTPRequests(urlPattern: ".*google\\.com/search.*")
+        let googleRequests = HTTPRequests(urlPattern: ".*google\\.com/search.*")
         XCTAssertEqual(googleRequests.count, 1, "Should have exactly one Google search request")
     }
     
-    @MainActor
     @available(macOS 13.3, iOS 16.4, *)
-    func testContextUpdate() async throws {
+    func testContextUpdate() throws {
         // Test the context update mechanism and verify that lastUpdated changes
         
         // Wait for initial user_context from periodic updates
-        let initialUserContext: UserContext = try await waitForContextUpdate(
+        let initialUserContext: UserContext = try waitForContextUpdate(
             forKey: "user_context",
         )
         
@@ -104,7 +103,7 @@ final class DemoUITests: XCTestCase {
         print("Initial lastUpdated: \(initialTimestamp)")
         
         // Wait for the next periodic update using since parameter (no sleep needed)
-        let updatedUserContext: UserContext = try await waitForContextUpdate(
+        let updatedUserContext: UserContext = try waitForContextUpdate(
             forKey: "user_context",
         )
         
@@ -120,7 +119,7 @@ final class DemoUITests: XCTestCase {
         XCTAssertEqual(updatedUserContext.isLoggedIn, true)
         
         // Also test app_state context
-        let appState: AppState = try await waitForContextUpdate(
+        let appState: AppState = try waitForContextUpdate(
             forKey: "app_state",
         )
         
@@ -128,7 +127,7 @@ final class DemoUITests: XCTestCase {
         XCTAssertEqual(appState.environment, "debug")
         
         // Verify available context keys
-        let allKeys = await Context.listKeys()
+        let allKeys = Context.listKeys()
         print("All available context keys after update: \(allKeys)")
         XCTAssertTrue(allKeys.contains("user_context"), "Should have user_context key")
         XCTAssertTrue(allKeys.contains("app_state"), "Should have app_state key")
@@ -298,7 +297,7 @@ final class DemoUITests: XCTestCase {
         searchButton.tap()
         
         // Wait for Google request and test it
-        let googleRequest = await waitForRequest(
+        let googleRequest = waitForRequest(
             urlPattern: ".*google\\.com/search.*",
             method: "GET",
             timeout: 5.0
@@ -317,7 +316,7 @@ final class DemoUITests: XCTestCase {
         let httpbinButton = app.buttons["Call HTTPBin API"]
         httpbinButton.tap()
         
-        let httpbinRequest = await waitForRequest(
+        let httpbinRequest = waitForRequest(
             urlPattern: "https://httpbin.org/get*",
             method: "GET",
             timeout: 5.0
@@ -348,7 +347,7 @@ final class DemoUITests: XCTestCase {
         }
         
         // Verify that we can distinguish between different requests
-        let allRequests = await HTTPRequests()
+        let allRequests = HTTPRequests()
         let googleRequests = allRequests.filter { request in
             request.request.url?.host?.contains("google.com") == true
         }
@@ -371,14 +370,14 @@ final class DemoUITests: XCTestCase {
         }
         
         // Test HTTPAssertNotRequested with custom message
-        await HTTPAssertNotRequested(
+        HTTPAssertNotRequested(
             url: "https://api.example.com/unauthorized",
             method: "POST",
             "No unauthorized API calls should be made during the test"
         )
         
         // Test that no DELETE requests were made
-        await HTTPAssertNotRequested(
+        HTTPAssertNotRequested(
             method: "DELETE",
             "DELETE requests should not be made in this demo app"
         )
@@ -391,7 +390,7 @@ final class DemoUITests: XCTestCase {
         httpbinButton.tap()
         
         // Wait for the response to complete
-        let httpbinResponse = await waitForResponse(
+        let httpbinResponse = waitForResponse(
             urlPattern: "https://httpbin.org/get*",
             method: "GET",
             timeout: 5.0
